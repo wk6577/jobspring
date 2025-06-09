@@ -1,4 +1,4 @@
-package com.milestone.exception;
+package com.JobAyong.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
