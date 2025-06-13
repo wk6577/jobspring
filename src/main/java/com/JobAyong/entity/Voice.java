@@ -13,7 +13,7 @@ public class Voice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "voice_id")
-    private Long voiceId;
+    private Integer voiceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "email", nullable = false)

@@ -13,7 +13,7 @@ public class Resume {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "resume_id")
-    private Long resumeId;
+    private Integer resumeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "email", nullable = false)

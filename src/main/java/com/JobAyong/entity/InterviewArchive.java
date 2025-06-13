@@ -14,7 +14,7 @@ public class InterviewArchive {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "interview_archive_id")
-    private Long interviewArchiveId;
+    private Integer interviewArchiveId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "email", nullable = false)
