@@ -25,8 +25,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/user/signup", "/api/auth/login").permitAll()
-                .requestMatchers("/api/user/*").permitAll() // GET, PUT, DELETE 모두 허용
-                .requestMatchers("/api/user/*/password").permitAll() // 비밀번호 변경 허용
+                .requestMatchers("/api/user/check-email").permitAll() // 이메일 중복 체크 허용
+                .requestMatchers("/api/user/**").permitAll() // 모든 user 하위 경로 허용
                 .anyRequest().authenticated()
             );
         
