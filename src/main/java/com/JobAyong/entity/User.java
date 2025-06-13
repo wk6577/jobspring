@@ -17,9 +17,8 @@ public class User {
     @Column(name = "email")
     private String email;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private UserRole role = UserRole.USER;
+    private String role;
 
     @Column(name = "password", nullable = false)
     private String password;
@@ -61,5 +60,13 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public UserRole getUserRole() {
+        return UserRole.fromString(role);
+    }
+
+    public void setUserRole(UserRole userRole) {
+        this.role = userRole.getValue();
     }
 }

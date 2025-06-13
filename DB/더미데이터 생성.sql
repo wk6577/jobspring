@@ -4,7 +4,7 @@
 INSERT INTO `user` (`email`, `role`, `password`, `name`, `birth`, `phone_number`, `gender`) VALUES
 ('user1@example.com', 'user', 'password123', '홍길동', '1990-01-01', '010-1234-5678', 'male'),
 ('user2@example.com', 'user', 'password123', '김철수', '1992-05-15', '010-2345-6789', 'male'),
-('admin@example.com', 'admin', 'admin123', '관리자', '1985-12-31', '010-3456-7890', 'female');
+('admin@example.com', 'admin', '$2a$10$EM5HoNM6z3k.xKZICyfM3.uqIh792ZmV6/QlpnyNl1qZVBMWBZRJC', '관리자', '1985-12-31', '010-3456-7890', 'female');
 
 -- company 테이블 더미데이터
 INSERT INTO `company` (`name`, `size`, `industry`, `employees`, `establishment`, `CEO`, `revenue`, `address`, `homepage`) VALUES

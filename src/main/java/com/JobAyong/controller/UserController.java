@@ -15,13 +15,9 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<User> signUp(@RequestBody UserSignUpRequest request) {
-        try {
-            User user = userService.signUp(request);
-            return ResponseEntity.ok(user);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<Void> signUp(@RequestBody UserSignUpRequest request) {
+        userService.signUp(request);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{email}")
