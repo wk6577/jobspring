@@ -1,8 +1,11 @@
 package com.JobAyong.service;
 
 import com.JobAyong.constant.UserRole;
+import com.JobAyong.constant.Gender;
 import com.JobAyong.dto.LoginResponse;
+import com.JobAyong.dto.PasswordChangeRequest;
 import com.JobAyong.dto.UserSignUpRequest;
+import com.JobAyong.dto.UserUpdateRequest;
 import com.JobAyong.entity.User;
 import com.JobAyong.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +73,70 @@ public class UserService {
 
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Transactional
+    public User updateUser(String email, UserUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 수정할 필드들 업데이트
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            user.setName(request.getName().trim());
+        }
+        
+        if (request.getBirth() != null) {
+            user.setBirth(request.getBirth());
+        }
+        
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            user.setPhoneNumber(request.getPhoneNumber().trim());
+        }
+        
+        if (request.getGender() != null && !request.getGender().trim().isEmpty()) {
+            // 문자열을 Gender enum으로 변환
+            try {
+                Gender gender = Gender.valueOf(request.getGender().toLowerCase());
+                user.setGender(gender);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("유효하지 않은 성별 값입니다: " + request.getGender());
+            }
+        }
+
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(String email, PasswordChangeRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 새 비밀번호와 확인 비밀번호 일치 확인
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 새 비밀번호 유효성 검사
+        if (request.getNewPassword().length() < 6) {
+            throw new RuntimeException("새 비밀번호는 6자 이상이어야 합니다.");
+        }
+
+        // 현재 비밀번호와 새 비밀번호가 같은지 확인
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new RuntimeException("새 비밀번호는 현재 비밀번호와 달라야 합니다.");
+        }
+
+        // 새 비밀번호 암호화 후 저장
+        String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+        user.setPassword(encodedNewPassword);
+        userRepository.save(user);
+
+        log.info("비밀번호 변경 완료: {}", email);
     }
 
     @Transactional

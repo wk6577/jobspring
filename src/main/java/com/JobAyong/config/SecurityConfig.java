@@ -24,7 +24,9 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/users/signup", "/api/auth/login").permitAll()
+                .requestMatchers("/api/user/signup", "/api/auth/login").permitAll()
+                .requestMatchers("/api/user/*").permitAll() // GET, PUT, DELETE 모두 허용
+                .requestMatchers("/api/user/*/password").permitAll() // 비밀번호 변경 허용
                 .anyRequest().authenticated()
             );
         
