@@ -39,14 +39,17 @@ public class Company {
     @Column(name = "revenue", length = 50)
     private String revenue;
 
-    @Column(name = "address", length = 100)
+    @Column(name = "address", length = 255)
     private String address;
 
     @Column(name = "homepage", length = 200)
     private String homepage;
 
-    @Column(name = "history", length = 255)
+    @Column(columnDefinition = "TEXT")
     private String history;
+
+    @Column(name = "main_business", length = 255)
+    private String main_business;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
