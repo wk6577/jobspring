@@ -39,7 +39,7 @@ public class Company {
     @Column(name = "revenue", length = 50)
     private String revenue;
 
-    @Column(name = "address", length = 255)
+    @Column(name = "address")
     private String address;
 
     @Column(name = "homepage", length = 200)
@@ -48,7 +48,7 @@ public class Company {
     @Column(columnDefinition = "TEXT")
     private String history;
 
-    @Column(name = "main_business", length = 255)
+    @Column(name = "main_business")
     private String main_business;
 
     @Column(name = "created_at")
