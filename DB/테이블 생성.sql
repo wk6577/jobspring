@@ -30,7 +30,7 @@ CREATE TABLE `user` (
 CREATE TABLE `company` (
     `company_id` INT AUTO_INCREMENT NOT NULL COMMENT '회사를 구분하는 고유 식별 번호',
     `name` VARCHAR(255) NOT NULL COMMENT '회사이름, 255길이제한, null불가',
-    `size` ENUM('large', 'medium', 'public') NULL COMMENT '회사규모: 대기업, 중소기업(중견), 공기업',
+    `size` ENUM('LARGE', 'MEDIUM', 'PUBLIC') NULL COMMENT '회사규모: 대기업, 중소기업(중견), 공기업',
     `industry` VARCHAR(100) NULL COMMENT '회사산업에 대한 설명, null가능, 100길이 제한',
     `employees` INT NULL COMMENT '회사내 사원수, null가능',
     `establishment` DATE NULL COMMENT '회사 설립일, null가능',

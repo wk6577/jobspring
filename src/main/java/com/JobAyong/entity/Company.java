@@ -49,7 +49,7 @@ public class Company {
     private String history;
 
     @Column(name = "main_business")
-    private String main_business;
+    private String mainBusiness;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
