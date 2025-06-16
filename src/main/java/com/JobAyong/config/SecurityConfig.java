@@ -32,7 +32,7 @@ public class SecurityConfig {
             }))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/user/signup", "/api/auth/login", "/api/company/**").permitAll()
+                .requestMatchers("/api/user/signup", "/api/auth/login", "/api/company/**", "/api/interview/**").permitAll()
                 .requestMatchers("/api/user/check-email").permitAll() // 이메일 중복 체크 허용
                 .requestMatchers("/api/user/**").permitAll() // 모든 user 하위 경로 허용
                 .requestMatchers("/customInterviewController/**").permitAll()

@@ -1,5 +1,6 @@
 -- 모든 테이블 조회 쿼리
-
+delete from interview_archive;
+SET SQL_SAFE_UPDATES = 1;
 -- user 테이블 조회
 SELECT * FROM `user`;
 

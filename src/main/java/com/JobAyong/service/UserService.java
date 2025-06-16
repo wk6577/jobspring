@@ -8,6 +8,8 @@ import com.JobAyong.dto.UserSignUpRequest;
 import com.JobAyong.dto.UserUpdateRequest;
 import com.JobAyong.entity.User;
 import com.JobAyong.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -138,6 +140,9 @@ public class UserService {
 
         log.info("비밀번호 변경 완료: {}", email);
     }
+
+    @Transactional(readOnly = true)
+    public User whoareyou(String email){ return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("접근 권한이 없습니다.")); }
 
     @Transactional
     public void delete(String email) {

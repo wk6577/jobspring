@@ -6,6 +6,12 @@ create database JobAyong;
 use JobAyong;
 -- select * from users;
 
+drop table `interview_answer`;
+drop table `interview_archive`;
+drop table `interview_eval`;
+drop table `interview_question`;
+
+commit;
 
 -- 테이블 생성
 -- 테이블 생성 쿼리
@@ -99,7 +105,7 @@ CREATE TABLE `interview_archive` (
     `email` VARCHAR(255) NOT NULL,
     `company_id` INT NULL COMMENT '회사를 구분하는 고유 식별 번호',
     `position` VARCHAR(100) NULL COMMENT '직무/전문분야',
-    `status` ENUM('pending', 'done') NULL,
+    `status` ENUM('PENDING', 'DONE') NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -112,7 +118,7 @@ CREATE TABLE `interview_archive` (
 CREATE TABLE `interview_question` (
     `interview_question_id` INT AUTO_INCREMENT NOT NULL,
     `interview_archive_id` INT NOT NULL,
-    `interview_question_type` ENUM('gen', 'str', 'per', 'tech', 'sit', 'cus') NOT NULL,
+    `interview_question_type` ENUM('GENERAL', 'PRESSURE', 'PERSONALITY', 'TECHNICAL', 'SITUATIONAL') NOT NULL,
     `interview_question` TEXT NOT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
@@ -136,22 +142,20 @@ CREATE TABLE `interview_answer` (
 -- interview_eval 테이블
 CREATE TABLE `interview_eval` (
     `interview_eval_id` INT AUTO_INCREMENT NOT NULL,
-    `interview_answer_id` INT NOT NULL,
     `interview_archive_id` INT NOT NULL,
     `eval_score`	INT	NULL,
-	`reason`	TEXT	NULL,
-	`good_summary`	TEXT	NULL,
-	`good_description`	TEXT	NULL,
-	`bad_summary`	TEXT	NULL,
-	`bad_description`	TEXT	NULL,
-	`state`	TEXT	NULL,
-	`cause`	TEXT	NULL,
-	`solution`	TEXT	NULL,
-	`improvment`	TEXT	NULL,
+	`eval_reason`	TEXT	NULL,
+	`eval_good_summary`	TEXT	NULL,
+	`eval_good_description`	TEXT	NULL,
+	`eval_bad_summary`	TEXT	NULL,
+	`eval_bad_description`	TEXT	NULL,
+	`eval_state`	TEXT	NULL,
+	`eval_cause`	TEXT	NULL,
+	`eval_solution`	TEXT	NULL,
+	`eval_improvment`	TEXT	NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
     PRIMARY KEY (`interview_eval_id`),
-    FOREIGN KEY (`interview_answer_id`) REFERENCES `interview_answer` (`interview_answer_id`),
     FOREIGN KEY (`interview_archive_id`) REFERENCES `interview_archive` (`interview_archive_id`)
 );
 
