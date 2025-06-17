@@ -24,31 +24,31 @@ public class InterviewEval {
     @Column(name = "eval_score")
     private int eval_score;
 
-    @Column(columnDefinition = "eval_reason TEXT NULL")
+    @Column(columnDefinition = " TEXT")
     private String eval_reason;
 
-    @Column(columnDefinition = "eval_bad_summary TEXT NULL")
+    @Column(columnDefinition = "TEXT")
     private String eval_bad_summary;
 
-    @Column(columnDefinition = "eval_bad_description TEXT NULL")
+    @Column(columnDefinition = "TEXT")
     private String eval_bad_description;
 
-    @Column(columnDefinition = "eval_good_summary TEXT NULL")
+    @Column(columnDefinition = "TEXT")
     private String eval_good_summary;
 
-    @Column(columnDefinition = "eval_good_description TEXT NULL")
+    @Column(columnDefinition = "TEXT")
     private String eval_good_description;
 
-    @Column(columnDefinition = "eval_state TEXT NULL")
+    @Column(columnDefinition = "TEXT")
     private String eval_state;
 
-    @Column(columnDefinition = "eval_cause TEXT NULL")
+    @Column(columnDefinition = "TEXT")
     private String eval_cause;
 
-    @Column(columnDefinition = "eval_solution TEXT NULL")
+    @Column(columnDefinition = "TEXT")
     private String eval_solution;
 
-    @Column(columnDefinition = "eval_improvment TEXT NULL")
+    @Column(columnDefinition = "TEXT")
     private String eval_improvment;
 
     @Column(name = "created_at", nullable = false)
