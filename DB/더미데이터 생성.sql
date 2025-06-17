@@ -2,9 +2,13 @@
 
 -- user 테이블 더미데이터
 INSERT INTO `user` (`email`, `role`, `password`, `name`, `birth`, `phone_number`, `gender`) VALUES
-('user1@example.com', 'user', 'password123', '홍길동', '1990-01-01', '010-1234-5678', 'male'),
-('user2@example.com', 'user', 'password123', '김철수', '1992-05-15', '010-2345-6789', 'male'),
-('admin@example.com', 'admin', '$2a$10$EM5HoNM6z3k.xKZICyfM3.uqIh792ZmV6/QlpnyNl1qZVBMWBZRJC', '관리자', '1985-12-31', '010-3456-7890', 'female');
+('a@naver.com', 'user', '$2a$10$dcwY8F8KPzQwdpFrrs5zEOi9l7Rp.mJ28x45guMPGCjO.PA6U0o/m', '테스트', '2025-06-10', '010-0000-0000', 'male'),
+('abc@abc.com', 'user', '$2a$10$Q.F6TVwnlJ0sXKiyILwoA.8C3lA.hWJbbWPKiSYVDkjs.Rho./no.', '김철수', '2025-06-04', '010-1234-5678', 'male'),
+('admin@example.com', 'admin', '$2a$10$EM5HoNM6z3k.xKZICyfM3.uqIh792ZmV6/QlpnyNl1qZVBMWBZRJC', '관리자', '1985-12-31', '010-3456-7890', 'female'),
+('csa4550@gmail.com', 'user', '$2a$10$sWGjlPP5EKA2IjF0h9D1xOt36fky9497B2PN93IBgvHGF3Hd.Q9Vq', '최선아', '2025-06-13', '010-2777-6767', 'female'),
+('kalons@naver.com', 'user', '$2a$10$X1iFRCGz8EAEJYLWgxDSB.xiHPIGpPD8D.ZsiiraW8IoMN5S.c/Ci', '김타코', '1982-04-27', '010-4633-7277', 'male'),
+('wtf@gmail.com', 'user', '$2a$10$YDYFjF6sguQpg96A68HdROOl9KzOGdvs0ipH0RWAiN6aj3TG3MjU6', '이게뭐야', '2025-06-16', '010-0000-0000', 'male'),
+('yechul.shin@gmail.com', 'user', '$2a$10$XeMbiUJv300H0hrgy3RrP.LDngAsLrd5rLRO6MIMmsSEXa8lU.tjS', '신예철', '2025-06-16', '010-1111-1111', 'male');
 
 -- company 테이블 더미데이터
 INSERT INTO company (
@@ -44114,33 +44118,33 @@ INSERT INTO `target_type` (`target_type_name`) VALUES
 
 -- question_list 테이블 더미데이터
 INSERT INTO `question_list` (`question_type`, `question`) VALUES
-('gen', '자기소개를 해주세요.'),
-('tech', '프로젝트에서 가장 어려웠던 점은 무엇인가요?'),
-('sit', '팀원과 갈등이 생겼을 때 어떻게 해결하시나요?');
+('GENERAL', '자기소개를 해주세요.'),
+('TECHNICAL', '프로젝트에서 가장 어려웠던 점은 무엇인가요?'),
+('SITUATIONAL', '팀원과 갈등이 생겼을 때 어떻게 해결하시나요?');
 
 -- resume 테이블 더미데이터
 INSERT INTO `resume` (`email`, `resume_title`, `resume_text`, `resume_type`) VALUES
-('user1@example.com', '신입 개발자 이력서', '안녕하세요. 신입 개발자 홍길동입니다...', 'text'),
-('user2@example.com', '경력 개발자 이력서', '안녕하세요. 3년차 개발자 김철수입니다...', 'text'),
-('user1@example.com', '포트폴리오', '프로젝트 경험: 1. 웹사이트 개발...', 'text');
+('a@naver.com', '신입 개발자 이력서', '안녕하세요. 신입 개발자 홍길동입니다...', 'text'),
+('abc@abc.com', '경력 개발자 이력서', '안녕하세요. 3년차 개발자 김철수입니다...', 'text'),
+('a@naver.com', '포트폴리오', '프로젝트 경험: 1. 웹사이트 개발...', 'text');
 
 -- voice 테이블 더미데이터
 INSERT INTO `voice` (`email`, `file_name`, `file_type`, `file_size`, `file_path`) VALUES
-('user1@example.com', 'interview1.mp3', 'audio/mp3', 1024, '/uploads/voice/interview1.mp3'),
-('user2@example.com', 'interview2.mp3', 'audio/mp3', 2048, '/uploads/voice/interview2.mp3'),
-('user1@example.com', 'interview3.mp3', 'audio/mp3', 3072, '/uploads/voice/interview3.mp3');
+('a@naver.com', 'interview1.mp3', 'audio/mp3', 1024, '/uploads/voice/interview1.mp3'),
+('abc@abc.com', 'interview2.mp3', 'audio/mp3', 2048, '/uploads/voice/interview2.mp3'),
+('a@naver.com', 'interview3.mp3', 'audio/mp3', 3072, '/uploads/voice/interview3.mp3');
 
 -- interview_archive 테이블 더미데이터
 INSERT INTO `interview_archive` (`email`, `company_id`, `position`, `status`) VALUES
-('user1@example.com', 1, '마케팅·광고·MD > 퍼포먼스마케터 > 카페·블로그관리', 'done'),
-('user2@example.com', 2, '금융·보험 > 보험설계사 > 보험사고', 'pending'),
-('user1@example.com', 3, '제조·생산 > 생산직종사자 > 조립', 'done');
+('a@naver.com', 1, '마케팅·광고·MD > 퍼포먼스마케터 > 카페·블로그관리', 'done'),
+('abc@abc.com', 2, '금융·보험 > 보험설계사 > 보험사고', 'pending'),
+('a@naver.com', 3, '제조·생산 > 생산직종사자 > 조립', 'done');
 
 -- interview_question 테이블 더미데이터
 INSERT INTO `interview_question` (`interview_archive_id`, `interview_question_type`, `interview_question`) VALUES
-(1, 'gen', '자기소개를 해주세요.'),
-(1, 'tech', '프로젝트 경험에 대해 말씀해주세요.'),
-(2, 'sit', '팀 프로젝트에서의 역할은 무엇이었나요?');
+(1, 'GENERAL', '자기소개를 해주세요.'),
+(1, 'TECHNICAL', '프로젝트 경험에 대해 말씀해주세요.'),
+(2, 'SITUATIONAL', '팀 프로젝트에서의 역할은 무엇이었나요?');
 
 -- interview_answer 테이블 더미데이터
 INSERT INTO `interview_answer` (`interview_question_id`, `interview_archive_id`, `interview_answer`) VALUES
@@ -44150,21 +44154,19 @@ INSERT INTO `interview_answer` (`interview_question_id`, `interview_archive_id`,
 
 -- interview_eval 테이블 더미데이터
 INSERT INTO `interview_eval` (
-    `interview_answer_id`,
     `interview_archive_id`,
     `eval_score`,
-    `reason`,
-    `good_summary`,
-    `good_description`,
-    `bad_summary`,
-    `bad_description`,
-    `state`,
-    `cause`,
-    `solution`,
-    `improvment`,
+    `eval_reason`,
+    `eval_good_summary`,
+    `eval_good_description`,
+    `eval_bad_summary`,
+    `eval_bad_description`,
+    `eval_state`,
+    `eval_cause`,
+    `eval_solution`,
+    `eval_improvment`,
     `created_at`
 ) VALUES (
-    1, -- 예시 interview_answer_id
     1, -- 예시 interview_archive_id
     30,
     '전체 답변이 구체성 부족하고, 자기 성찰이나 대응 방식을 명확히 드러내지 못하며 전달력도 낮은 편입니다. 특히 시간 관리 측면에서 일부 답변이 매우 짧아 핵심 내용을 전달하는 데 어려움이 있으며, 조언이나 행동 방침이 모호하거나 단순하여 설득력이 떨어집니다. 전반적으로 면접 준비와 답변의 깊이가 보완될 필요가 있습니다.',
@@ -44190,18 +44192,18 @@ INSERT INTO `interview_eval` (
 
 -- voice_eval 테이블 더미데이터
 INSERT INTO `voice_eval` (`voice_id`, `email`, `voice_eval_comment`, `voice_eval_score`) VALUES
-(1, 'user1@example.com', '발음이 매우 명확합니다.', 9),
-(2, 'user2@example.com', '목소리가 조금 작습니다.', 7),
-(3, 'user1@example.com', '적절한 톤과 속도로 말했습니다.', 8);
+(1, 'a@naver.com', '발음이 매우 명확합니다.', 9),
+(2, 'abc@abc.com', '목소리가 조금 작습니다.', 7),
+(3, 'a@naver.com', '적절한 톤과 속도로 말했습니다.', 8);
 
 -- resume_eval 테이블 더미데이터
 INSERT INTO `resume_eval` (`resume_id`, `email`, `resume_eval_comment`, `resume_eval_score`, `resume_org`, `resume_log`, `position`) VALUES
-(1, 'user1@example.com', '이력서가 잘 구성되어 있습니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '신입 개발자'),
-(2, 'user2@example.com', '경력 사항이 상세합니다.', 9, '원본 이력서 내용', '수정된 이력서 내용', '시니어 개발자'),
-(3, 'user1@example.com', '포트폴리오가 인상적입니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '주니어 개발자');
+(1, 'a@naver.com', '이력서가 잘 구성되어 있습니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '신입 개발자'),
+(2, 'abc@abc.com', '경력 사항이 상세합니다.', 9, '원본 이력서 내용', '수정된 이력서 내용', '시니어 개발자'),
+(3, 'a@naver.com', '포트폴리오가 인상적입니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '주니어 개발자');
 
 -- report 테이블 더미데이터
 INSERT INTO `report` (`email`, `target_type_id`, `target_id`, `report_reason`, `status`) VALUES
-('user1@example.com', 1, 1, '부적절한 질문입니다.', 'pending'),
-('user2@example.com', 2, 1, '부정확한 평가입니다.', 'done'),
-('user1@example.com', 3, 1, '음성 품질이 좋지 않습니다.', 'pending'); 
+('a@naver.com', 1, 1, '부적절한 질문입니다.', 'pending'),
+('abc@abc.com', 2, 1, '부정확한 평가입니다.', 'done'),
+('a@naver.com', 3, 1, '음성 품질이 좋지 않습니다.', 'pending'); 

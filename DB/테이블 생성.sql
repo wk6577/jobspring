@@ -6,10 +6,10 @@ create database JobAyong;
 use JobAyong;
 -- select * from users;
 
-drop table `interview_answer`;
-drop table `interview_archive`;
-drop table `interview_eval`;
-drop table `interview_question`;
+-- drop table `interview_answer`;
+-- drop table `interview_archive`;
+-- drop table `interview_eval`;
+-- drop table `interview_question`;
 
 commit;
 
@@ -26,6 +26,8 @@ CREATE TABLE `user` (
     `gender` ENUM('male', 'female') NOT NULL,
     `profile_image` VARCHAR(255) NULL COMMENT '프로필 사진 파일 url',
     `original_filename` VARCHAR(255) NULL COMMENT '업로드시 사용자가 올린 파일명',
+    `job`	VARCHAR(255)	NULL,
+	`company`	VARCHAR(255)	NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -62,7 +64,7 @@ CREATE TABLE `target_type` (
 -- question_list 테이블
 CREATE TABLE `question_list` (
     `question_id` INT AUTO_INCREMENT NOT NULL,
-    `question_type` ENUM('gen', 'str', 'per', 'tech', 'sit', 'cus') NOT NULL,
+    `question_type` ENUM('GENERAL', 'PRESSURE', 'PERSONALITY', 'TECHNICAL', 'SITUATIONAL', 'CUSTOM') NOT NULL,
     `question` TEXT NOT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
@@ -118,7 +120,7 @@ CREATE TABLE `interview_archive` (
 CREATE TABLE `interview_question` (
     `interview_question_id` INT AUTO_INCREMENT NOT NULL,
     `interview_archive_id` INT NOT NULL,
-    `interview_question_type` ENUM('GENERAL', 'PRESSURE', 'PERSONALITY', 'TECHNICAL', 'SITUATIONAL') NOT NULL,
+    `interview_question_type` ENUM('GENERAL', 'PRESSURE', 'PERSONALITY', 'TECHNICAL', 'SITUATIONAL', 'CUSTOM') NOT NULL,
     `interview_question` TEXT NOT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
