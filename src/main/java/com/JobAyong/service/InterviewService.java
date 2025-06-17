@@ -51,7 +51,7 @@ public class InterviewService {
      *@author 나세호
      * */
     @Transactional
-    public void createArchive(createNewInterviewArchiveRequest request){
+    public String createArchive(createNewInterviewArchiveRequest request){
         User user = userService.whoareyou(request.getEmail()); // 예외 발생 구간01
         Company company = companyService.findById(request.getCompanyId()); // 예외 발생 구간02
 
@@ -79,6 +79,8 @@ public class InterviewService {
             questionList.add(new_interviewQuestion);
         }
         interviewQuestionRepository.saveAll(questionList);
+
+        return request.getArchiveName();
     }
 
 }

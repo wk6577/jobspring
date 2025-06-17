@@ -1,6 +1,7 @@
 package com.JobAyong.controller;
 
 import com.JobAyong.dto.createNewInterviewArchiveRequest;
+import com.JobAyong.dto.createNewInterviewArchiveResponse;
 import com.JobAyong.service.InterviewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +23,11 @@ public class InterviewController {
     * @author 나세호
     * */
     @PostMapping
-    public ResponseEntity<?> createNewInterviewArchive(@RequestBody  createNewInterviewArchiveRequest request){
-        interviewService.createArchive(request);
-        return ResponseEntity.ok("새로운 모의 면접 기록 생성됨");
+    public ResponseEntity<createNewInterviewArchiveResponse> createNewInterviewArchive(@RequestBody  createNewInterviewArchiveRequest request){
+        String name = interviewService.createArchive(request);
+
+        createNewInterviewArchiveResponse response = new createNewInterviewArchiveResponse();
+        response.setArchiveName(name);
+        return ResponseEntity.ok(response);
     }
 }

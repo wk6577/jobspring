@@ -107,6 +107,7 @@ CREATE TABLE `interview_archive` (
     `interview_archive_id` INT AUTO_INCREMENT NOT NULL,
     `email` VARCHAR(255) NOT NULL,
     `company_id` INT NULL COMMENT '회사를 구분하는 고유 식별 번호',
+    `archive_name` VARCHAR(255) NOT NULL,
     `position` VARCHAR(100) NULL COMMENT '직무/전문분야',
     `status` ENUM('PENDING', 'DONE') NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

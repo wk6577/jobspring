@@ -44131,25 +44131,7 @@ INSERT INTO `resume` (`email`, `resume_title`, `resume_text`, `resume_type`) VAL
 INSERT INTO `voice` (`email`, `file_name`, `file_type`, `file_size`, `file_path`) VALUES
 ('admin@example.com', 'interview1.mp3', 'audio/mp3', 1024, '/uploads/voice/interview1.mp3'),
 ('abc@abc.com', 'interview2.mp3', 'audio/mp3', 2048, '/uploads/voice/interview2.mp3'),
-('admin@example.com', 'interview3.mp3', 'audio/mp3', 3072, '/uploads/voice/interview3.mp3');
-
--- interview_archive 테이블 더미데이터
-INSERT INTO `interview_archive` (`email`, `company_id`, `position`, `status`) VALUES
-('admin@example.com', 1, '마케팅·광고·MD > 퍼포먼스마케터 > 카페·블로그관리', 'done'),
-('abc@abc.com', 2, '금융·보험 > 보험설계사 > 보험사고', 'pending'),
-('admin@example.com', 3, '제조·생산 > 생산직종사자 > 조립', 'done');
-
--- interview_question 테이블 더미데이터
-INSERT INTO `interview_question` (`interview_archive_id`, `interview_question_type`, `interview_question`) VALUES
-(1, 'GENERAL', '자기소개를 해주세요.'),
-(1, 'TECHNICAL', '프로젝트 경험에 대해 말씀해주세요.'),
-(2, 'SITUATIONAL', '팀 프로젝트에서의 역할은 무엇이었나요?');
-
--- interview_answer 테이블 더미데이터
-INSERT INTO `interview_answer` (`interview_question_id`, `interview_archive_id`, `interview_answer`) VALUES
-(1, 1, '안녕하세요. 홍길동입니다. 컴퓨터공학을 전공했습니다.'),
-(2, 1, '웹 프로젝트를 진행했고, 프론트엔드 개발을 담당했습니다.'),
-(3, 2, '팀장으로서 프로젝트 일정 관리와 팀원 조율을 담당했습니다.');
+('admin@example.com', 'interview3.mp3', 'audio/mp3', 3072, '/uploads/voice/interview3.mp3')
 
 -- interview_eval 테이블 더미데이터
 INSERT INTO `interview_eval` (

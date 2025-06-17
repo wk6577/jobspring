@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class createNewInterviewArchiveRequest {
     private String email;
-    private String ArchiveName;
+    private String archiveName;
     private Long companyId;
     private String position;
     private List<String> questions;
