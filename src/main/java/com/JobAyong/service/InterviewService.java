@@ -11,11 +11,14 @@ import com.JobAyong.repository.InterviewEvalRepository;
 import com.JobAyong.repository.InterviewQuestionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -50,7 +53,9 @@ public class InterviewService {
      * */
     @Transactional
     public Integer createArchive(createNewInterviewArchiveRequest request){
-        User user = userService.whoareyou(request.getEmail()); // 예외 발생 구간01
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userService.whoareyou(email);
         Company company = companyService.findById(request.getCompanyId()); // 예외 발생 구간02
 
         InterviewArchive new_interviewArchive = new InterviewArchive();
@@ -86,7 +91,9 @@ public class InterviewService {
      * */
     @Transactional
     public void saveAnswerAndEval(createNewInterviewQuestionAndEvalRequest request){
-        User user = userService.whoareyou(request.getEmail()); // 예외 발생 가능(나중에 토큰 인증기능으로 대체)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userService.whoareyou(email); // 예외 발생 가능(나중에 토큰 인증기능으로 대체)
 
         createNewInterviewQuestionAndEvalRequest.EvaluationDTO result_of_eval = request.getEvaluation();
         Integer interviewArchiveId = request.getInterviewArchiveId();
@@ -107,6 +114,14 @@ public class InterviewService {
         }
 
         interviewAnswerRepository.saveAll(interviewAnswerList);
+
+        Optional<InterviewEval> existingEval = interviewEvalRepository.findByInterviewArchive(interviewArchive);
+
+        if (existingEval.isPresent()) {
+            interviewArchive.setStatus(InterviewStatus.DONE);
+            interviewArchiveRepository.save(interviewArchive);
+            throw new RuntimeException("이미 해당 아카이브에는 평가가 존재합니다."); // 먼저 평가존재하는지 파악한뒤 생성
+        }
 
         InterviewEval new_eval = new InterviewEval();
 
@@ -129,4 +144,17 @@ public class InterviewService {
         interviewArchiveRepository.save(interviewArchive);
     }
 
+    @Transactional
+    public void deleteEval(int id, String email){
+        // 누군지 확인
+        User user = userService.whoareyou(email);
+        // 접근 권한 확인
+        InterviewArchive archive = interviewArchiveRepository.findById(id).orElseThrow(() -> new RuntimeException("유효하지 않은 아키이브 아이디 입니다."));
+
+        if(archive.getUser() != user){
+            throw new RuntimeException("니꺼 아니잖아 나가");
+        }
+
+        interviewArchiveRepository.delete(archive);
+    }
 }

@@ -35,6 +35,9 @@ public class InterviewQuestion {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @OneToOne(mappedBy = "interviewQuestion", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private InterviewAnswer interviewAnswer;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

@@ -9,6 +9,7 @@ import com.JobAyong.repository.InterviewArchiveRepository;
 import com.JobAyong.repository.InterviewEvalRepository;
 import com.JobAyong.repository.InterviewQuestionRepository;
 import com.JobAyong.repository.InterviewAnswerRepository;
+import com.JobAyong.service.InterviewService;
 import com.JobAyong.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class UserController {
     private final InterviewEvalRepository interviewEvalRepository;
     private final InterviewQuestionRepository interviewQuestionRepository;
     private final InterviewAnswerRepository interviewAnswerRepository;
+    private final InterviewService interviewService;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> signUp(@RequestBody UserSignUpRequest request) {
@@ -143,6 +145,7 @@ public class UserController {
                 evaluation.put("createdAt", archive.getCreatedAt());
                 evaluation.put("companyName", archive.getCompany() != null ? archive.getCompany().getName() : null);
                 evaluation.put("position", archive.getPosition());
+                evaluation.put("status", archive.getStatus());
                 
                 evaluationList.add(evaluation);
             }
@@ -314,28 +317,8 @@ public class UserController {
         log.info("평가 삭제 요청 - 사용자: {}, 평가 ID: {}", email, id);
         
         try {
-            // 인터뷰 아카이브 조회
-            Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
-            if (archiveOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            InterviewArchive archive = archiveOpt.get();
-            
-            // 사용자 본인의 평가인지 확인
-            if (!archive.getUser().getEmail().equals(email)) {
-                log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})를 삭제 시도", email, id);
-                return ResponseEntity.status(403).build();
-            }
-            
-            // 관련 평가, 질문, 답변 삭제
-            interviewEvalRepository.deleteByInterviewArchiveInterviewArchiveId(archive.getInterviewArchiveId());
-            interviewAnswerRepository.deleteAllByInterviewArchive(archive);
-            interviewQuestionRepository.deleteAllByInterviewArchive(archive);
-            
-            // 아카이브 삭제
-            interviewArchiveRepository.delete(archive);
-            
+            interviewService.deleteEval(id, email);
+
             log.info("평가 삭제 완료 - 평가 ID: {}", id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {

@@ -9,7 +9,6 @@ public class createNewInterviewQuestionAndEvalRequest {
     private EvaluationDTO evaluation;
     private Integer interviewArchiveId;
     private List<String> answers;
-    private String Email;
 
     @Data
     public static class EvaluationDTO {
