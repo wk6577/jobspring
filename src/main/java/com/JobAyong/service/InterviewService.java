@@ -123,6 +123,10 @@ public class InterviewService {
         new_eval.setInterviewArchive(interviewArchive);
 
         interviewEvalRepository.save(new_eval);
+
+        interviewArchive.setStatus(InterviewStatus.DONE);
+
+        interviewArchiveRepository.save(interviewArchive);
     }
 
 }
