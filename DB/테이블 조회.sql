@@ -1,6 +1,5 @@
 -- 모든 테이블 조회 쿼리
 
-use JobAyong;
 -- user 테이블 조회
 SELECT * FROM `user`;
 

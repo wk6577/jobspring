@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface InterviewArchiveRepository extends JpaRepository<InterviewArchive, Long> {
+public interface InterviewArchiveRepository extends JpaRepository<InterviewArchive, Integer> {
     List<InterviewArchive> findByUser(User user);
     List<InterviewArchive> findByUserEmail(String email);
     List<InterviewArchive> findByCompany(Company company);
