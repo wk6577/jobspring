@@ -1,7 +1,7 @@
 drop database JobAyong; 
 create database JobAyong;
 
-desc interview_question;
+-- desc interview_question;
 
 -- DB 사용
 use JobAyong;

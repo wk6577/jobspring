@@ -18,8 +18,8 @@ public class InterviewAnswer {
     private Integer interviewAnswerId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "interview_question_id", nullable = false)
-    private InterviewQuestion interviewQuestion;
+    @JoinColumn(name = "interview_answer_id", nullable = false)
+    private InterviewAnswer interviewAnswer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "interview_archive_id", nullable = false)

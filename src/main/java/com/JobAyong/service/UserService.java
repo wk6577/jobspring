@@ -1,5 +1,6 @@
 package com.JobAyong.service;
 
+import com.JobAyong.config.JwtTokenProvider;
 import com.JobAyong.constant.UserRole;
 import com.JobAyong.constant.Gender;
 import com.JobAyong.dto.LoginResponse;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public void signUp(UserSignUpRequest request) {
@@ -48,8 +50,6 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
 
         log.info("Login attempt - Email: {}", email);
-        log.info("Stored password: {}", user.getPassword());
-        log.info("Input password: {}", password);
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             log.error("Password mismatch for user: {}", email);
@@ -58,10 +58,13 @@ public class UserService {
 
         log.info("Login successful for user: {}", email);
 
+        // JWT 토큰 생성
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getName());
+
         LoginResponse response = new LoginResponse();
         response.setEmail(user.getEmail());
         response.setName(user.getName());
-        response.setToken("dummy-token"); // TODO: JWT 토큰 생성 로직 추가
+        response.setToken(token);
 
         return response;
     }
