@@ -8,8 +8,6 @@ import com.JobAyong.dto.UserSignUpRequest;
 import com.JobAyong.dto.UserUpdateRequest;
 import com.JobAyong.entity.User;
 import com.JobAyong.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -103,6 +101,15 @@ public class UserService {
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("유효하지 않은 성별 값입니다: " + request.getGender());
             }
+        }
+
+        // job과 company 필드 업데이트
+        if (request.getJob() != null) {
+            user.setJob(request.getJob());
+        }
+        
+        if (request.getCompany() != null) {
+            user.setCompany(request.getCompany());
         }
 
         return userRepository.save(user);

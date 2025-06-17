@@ -9,4 +9,6 @@ public class UserUpdateRequest {
     private LocalDate birth;
     private String phoneNumber;
     private String gender; // "male" 또는 "female"
+    private String job; // 직무 정보 (JSON 문자열)
+    private String company; // 회사 정보 (JSON 문자열)
 } 

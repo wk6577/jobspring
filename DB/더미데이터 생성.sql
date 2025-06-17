@@ -2,7 +2,6 @@
 
 -- user 테이블 더미데이터
 INSERT INTO `user` (`email`, `role`, `password`, `name`, `birth`, `phone_number`, `gender`) VALUES
-('a@naver.com', 'user', '$2a$10$dcwY8F8KPzQwdpFrrs5zEOi9l7Rp.mJ28x45guMPGCjO.PA6U0o/m', '테스트', '2025-06-10', '010-0000-0000', 'male'),
 ('abc@abc.com', 'user', '$2a$10$Q.F6TVwnlJ0sXKiyILwoA.8C3lA.hWJbbWPKiSYVDkjs.Rho./no.', '김철수', '2025-06-04', '010-1234-5678', 'male'),
 ('admin@example.com', 'admin', '$2a$10$EM5HoNM6z3k.xKZICyfM3.uqIh792ZmV6/QlpnyNl1qZVBMWBZRJC', '관리자', '1985-12-31', '010-3456-7890', 'female'),
 ('csa4550@gmail.com', 'user', '$2a$10$sWGjlPP5EKA2IjF0h9D1xOt36fky9497B2PN93IBgvHGF3Hd.Q9Vq', '최선아', '2025-06-13', '010-2777-6767', 'female'),
@@ -44124,21 +44123,21 @@ INSERT INTO `question_list` (`question_type`, `question`) VALUES
 
 -- resume 테이블 더미데이터
 INSERT INTO `resume` (`email`, `resume_title`, `resume_text`, `resume_type`) VALUES
-('a@naver.com', '신입 개발자 이력서', '안녕하세요. 신입 개발자 홍길동입니다...', 'text'),
+('admin@example.com', '신입 개발자 이력서', '안녕하세요. 신입 개발자 홍길동입니다...', 'text'),
 ('abc@abc.com', '경력 개발자 이력서', '안녕하세요. 3년차 개발자 김철수입니다...', 'text'),
-('a@naver.com', '포트폴리오', '프로젝트 경험: 1. 웹사이트 개발...', 'text');
+('admin@example.com', '포트폴리오', '프로젝트 경험: 1. 웹사이트 개발...', 'text');
 
 -- voice 테이블 더미데이터
 INSERT INTO `voice` (`email`, `file_name`, `file_type`, `file_size`, `file_path`) VALUES
-('a@naver.com', 'interview1.mp3', 'audio/mp3', 1024, '/uploads/voice/interview1.mp3'),
+('admin@example.com', 'interview1.mp3', 'audio/mp3', 1024, '/uploads/voice/interview1.mp3'),
 ('abc@abc.com', 'interview2.mp3', 'audio/mp3', 2048, '/uploads/voice/interview2.mp3'),
-('a@naver.com', 'interview3.mp3', 'audio/mp3', 3072, '/uploads/voice/interview3.mp3');
+('admin@example.com', 'interview3.mp3', 'audio/mp3', 3072, '/uploads/voice/interview3.mp3');
 
 -- interview_archive 테이블 더미데이터
 INSERT INTO `interview_archive` (`email`, `company_id`, `position`, `status`) VALUES
-('a@naver.com', 1, '마케팅·광고·MD > 퍼포먼스마케터 > 카페·블로그관리', 'done'),
+('admin@example.com', 1, '마케팅·광고·MD > 퍼포먼스마케터 > 카페·블로그관리', 'done'),
 ('abc@abc.com', 2, '금융·보험 > 보험설계사 > 보험사고', 'pending'),
-('a@naver.com', 3, '제조·생산 > 생산직종사자 > 조립', 'done');
+('admin@example.com', 3, '제조·생산 > 생산직종사자 > 조립', 'done');
 
 -- interview_question 테이블 더미데이터
 INSERT INTO `interview_question` (`interview_archive_id`, `interview_question_type`, `interview_question`) VALUES
@@ -44192,18 +44191,18 @@ INSERT INTO `interview_eval` (
 
 -- voice_eval 테이블 더미데이터
 INSERT INTO `voice_eval` (`voice_id`, `email`, `voice_eval_comment`, `voice_eval_score`) VALUES
-(1, 'a@naver.com', '발음이 매우 명확합니다.', 9),
+(1, 'admin@example.com', '발음이 매우 명확합니다.', 9),
 (2, 'abc@abc.com', '목소리가 조금 작습니다.', 7),
-(3, 'a@naver.com', '적절한 톤과 속도로 말했습니다.', 8);
+(3, 'admin@example.com', '적절한 톤과 속도로 말했습니다.', 8);
 
 -- resume_eval 테이블 더미데이터
 INSERT INTO `resume_eval` (`resume_id`, `email`, `resume_eval_comment`, `resume_eval_score`, `resume_org`, `resume_log`, `position`) VALUES
-(1, 'a@naver.com', '이력서가 잘 구성되어 있습니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '신입 개발자'),
+(1, 'admin@example.com', '이력서가 잘 구성되어 있습니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '신입 개발자'),
 (2, 'abc@abc.com', '경력 사항이 상세합니다.', 9, '원본 이력서 내용', '수정된 이력서 내용', '시니어 개발자'),
-(3, 'a@naver.com', '포트폴리오가 인상적입니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '주니어 개발자');
+(3, 'admin@example.com', '포트폴리오가 인상적입니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '주니어 개발자');
 
 -- report 테이블 더미데이터
 INSERT INTO `report` (`email`, `target_type_id`, `target_id`, `report_reason`, `status`) VALUES
-('a@naver.com', 1, 1, '부적절한 질문입니다.', 'pending'),
+('admin@example.com', 1, 1, '부적절한 질문입니다.', 'pending'),
 ('abc@abc.com', 2, 1, '부정확한 평가입니다.', 'done'),
-('a@naver.com', 3, 1, '음성 품질이 좋지 않습니다.', 'pending'); 
+('admin@example.com', 3, 1, '음성 품질이 좋지 않습니다.', 'pending'); 

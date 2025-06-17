@@ -42,6 +42,12 @@ public class User {
     @Column(name = "original_filename")
     private String originalFilename;
 
+    @Column(name = "job")
+    private String job;
+
+    @Column(name = "company")
+    private String company;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

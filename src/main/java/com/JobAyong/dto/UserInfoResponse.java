@@ -16,4 +16,6 @@ public class UserInfoResponse {
     private String phoneNumber;
     private String gender;
     private String profileImage;
+    private String job; // 직무 정보 (JSON 문자열)
+    private String company; // 회사 정보 (JSON 문자열)
 } 
