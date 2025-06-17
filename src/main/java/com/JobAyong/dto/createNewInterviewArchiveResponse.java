@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class createNewInterviewArchiveResponse {
-    private String archiveName;
+    private Integer interviewArchiveId;
 }

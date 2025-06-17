@@ -2,6 +2,8 @@ package com.JobAyong.controller;
 
 import com.JobAyong.dto.createNewInterviewArchiveRequest;
 import com.JobAyong.dto.createNewInterviewArchiveResponse;
+import com.JobAyong.dto.createNewInterviewQuestionAndEvalRequest;
+import com.JobAyong.dto.createNewInterviewQuestionAndEvalResponse;
 import com.JobAyong.service.InterviewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +26,22 @@ public class InterviewController {
     * */
     @PostMapping
     public ResponseEntity<createNewInterviewArchiveResponse> createNewInterviewArchive(@RequestBody  createNewInterviewArchiveRequest request){
-        String name = interviewService.createArchive(request);
+        int interviewArchiveID = interviewService.createArchive(request);
 
         createNewInterviewArchiveResponse response = new createNewInterviewArchiveResponse();
-        response.setArchiveName(name);
+        response.setInterviewArchiveId(interviewArchiveID);
+        return ResponseEntity.ok(response);
+    }
+
+    /*@apiNote 모의 면접 평가 및 답변 저장
+     * @author 나세호
+     * */
+    @PostMapping("/answer/eval")
+    public ResponseEntity<createNewInterviewQuestionAndEvalResponse> createNewInterviewQuestionAndEval(@RequestBody createNewInterviewQuestionAndEvalRequest request){
+        interviewService.saveAnswerAndEval(request);
+
+        createNewInterviewQuestionAndEvalResponse response = new createNewInterviewQuestionAndEvalResponse();
+        response.setMsg("자동 저장 완료");
         return ResponseEntity.ok(response);
     }
 }
