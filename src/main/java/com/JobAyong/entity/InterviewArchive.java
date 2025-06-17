@@ -24,6 +24,9 @@ public class InterviewArchive {
     @JoinColumn(name = "company_id")
     private Company company;
 
+    @Column(name = "archive_name")
+    private String archive_name;
+
     @Column(name = "position", length = 100)
     private String position;
 

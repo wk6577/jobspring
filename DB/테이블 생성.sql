@@ -3,7 +3,6 @@ create database JobAyong;
 
 desc interview_question;
 
-
 -- DB 사용
 use JobAyong;
 -- select * from users;

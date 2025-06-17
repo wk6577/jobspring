@@ -60,7 +60,7 @@ public class InterviewService {
         new_interviewArchive.setCompany(company);
         new_interviewArchive.setPosition(request.getPosition());
         new_interviewArchive.setStatus(InterviewStatus.PENDING);
-
+        new_interviewArchive.setArchive_name(request.getArchiveName());
 
         interviewArchiveRepository.save(new_interviewArchive);
 
