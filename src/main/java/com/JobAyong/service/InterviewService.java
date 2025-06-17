@@ -36,20 +36,15 @@ public class InterviewService {
     * @author 나세호
     * */
     public InterviewQuestionType setQuestionType(String type){
-        switch (type){
-            case "general":
-                return InterviewQuestionType.GENERAL;
-            case "pressure":
-                return InterviewQuestionType.PRESSURE;
-            case "personality":
-                return InterviewQuestionType.PERSONALITY;
-            case "technical":
-                return InterviewQuestionType.TECHNICAL;
-            case "situational":
-                return InterviewQuestionType.SITUATIONAL;
-            default:
-                return null;
-        }
+        String mode = type.trim();
+        return switch (mode) {
+            case "general" -> InterviewQuestionType.GENERAL;
+            case "pressure" -> InterviewQuestionType.PRESSURE;
+            case "personality" -> InterviewQuestionType.PERSONALITY;
+            case "technical" -> InterviewQuestionType.TECHNICAL;
+            case "situational" -> InterviewQuestionType.SITUATIONAL;
+            default -> throw new IllegalArgumentException("Unknown type: " + type);
+        };
     }
 
     /*@apiNote 새로운 아카이브를 생성하고 그안에 질문을 저장해주는 함수

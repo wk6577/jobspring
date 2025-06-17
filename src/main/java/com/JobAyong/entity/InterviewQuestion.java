@@ -23,7 +23,7 @@ public class InterviewQuestion {
     private InterviewArchive interviewArchive;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "interview_question_type")
+    @Column(name = "interview_question_type", columnDefinition = "ENUM('GENERAL','PRESSURE','PERSONALITY','TECHNICAL','SITUATIONAL')")
     private InterviewQuestionType interview_question_type;
 
     @Column(name = "interview_question")
