@@ -17,15 +17,15 @@ public class InterviewAnswer {
     @Column(name = "interview_answer_id")
     private Integer interviewAnswerId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "interview_answer_id", nullable = false)
-    private InterviewAnswer interviewAnswer;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "interview_archive_id", nullable = false)
     private InterviewArchive interviewArchive;
 
-    @Column(name = "interview_answer")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "interview_question_id")
+    private InterviewQuestion interviewQuestion;
+
+    @Column(name = "interview_answer", columnDefinition = "TEXT")
     private String interview_answer;
 
     @Column(name = "created_at", nullable = false)
