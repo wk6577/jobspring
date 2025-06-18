@@ -24,7 +24,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(request -> { // webconfig 역할 대신 하는 코드
+                .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of("http://localhost:3000"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
@@ -32,20 +32,26 @@ public class SecurityConfig {
                     config.setAllowCredentials(true);
                     config.setMaxAge(3600L);
                     return config;
-            }))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/user/signup", "/api/auth/login", "/api/company/**").permitAll()
-                .requestMatchers("/api/user/check-email").permitAll() // 이메일 중복 체크 허용
-                .requestMatchers("/api/auth/me").authenticated() // 인증된 사용자만 접근 가능
-                .requestMatchers("/api/user/**").authenticated() // 인증된 사용자만 접근 가능
-                .requestMatchers("/api/interview/**").authenticated()
-                .requestMatchers("/customInterviewController/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
+                }))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/user/signup",
+                                "/api/auth/login",
+                                "/api/company/**",
+                                "/api/user/check-email",
+                                "/customInterviewController/**",
+                                "/api/inquiries",
+                                "/api/inquiries/**"
+                        ).permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/interview/**").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -53,18 +59,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowedOriginPatterns(List.of("*"));
-//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-//        configuration.setAllowedHeaders(Arrays.asList("*"));
-//        configuration.setAllowCredentials(true);
-//        configuration.setMaxAge(3600L);
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
-//    }
-} 
+}
