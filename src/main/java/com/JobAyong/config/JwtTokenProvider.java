@@ -35,7 +35,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(email)
-                .claim("email", email) // email 명시적 claim 추가
+                .claim("email", email)
                 .claim("name", name)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
