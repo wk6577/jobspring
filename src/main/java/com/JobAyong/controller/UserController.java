@@ -1,14 +1,8 @@
 package com.JobAyong.controller;
 
-import com.JobAyong.dto.PasswordChangeRequest;
-import com.JobAyong.dto.UserSignUpRequest;
-import com.JobAyong.dto.UserInfoResponse;
-import com.JobAyong.dto.UserUpdateRequest;
+import com.JobAyong.dto.*;
 import com.JobAyong.entity.*;
-import com.JobAyong.repository.InterviewArchiveRepository;
-import com.JobAyong.repository.InterviewEvalRepository;
-import com.JobAyong.repository.InterviewQuestionRepository;
-import com.JobAyong.repository.InterviewAnswerRepository;
+import com.JobAyong.repository.*;
 import com.JobAyong.service.InterviewService;
 import com.JobAyong.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -32,6 +27,7 @@ public class UserController {
     private final InterviewQuestionRepository interviewQuestionRepository;
     private final InterviewAnswerRepository interviewAnswerRepository;
     private final InterviewService interviewService;
+    private final CompanyRepository companyRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> signUp(@RequestBody UserSignUpRequest request) {
@@ -74,24 +70,26 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{email}")
-    public ResponseEntity<UserInfoResponse> updateUser(@PathVariable String email, @RequestBody UserUpdateRequest request) {
+
+    /*@apiNote 사용자의 직무 회사를 수정하는 API
+    * @author 나세호
+    * */
+    @PutMapping("/jobcom")
+    public ResponseEntity<UserUpdateResponse> updateUser(@RequestBody UserUpdateRequest request) {
         try {
-            log.info("사용자 정보 수정 요청: {}", email);
-            User updatedUser = userService.updateUser(email, request);
-            
-            UserInfoResponse response = new UserInfoResponse(
-                updatedUser.getEmail(),
-                updatedUser.getName(),
-                updatedUser.getBirth() != null ? updatedUser.getBirth().toString() : null,
-                updatedUser.getPhoneNumber(),
-                updatedUser.getGender() != null ? updatedUser.getGender().toString() : null,
-                null, // 프로필 이미지는 나중에 구현
-                updatedUser.getJob(), // 직무 정보
-                updatedUser.getCompany() // 회사 정보
-            );
-            
-            log.info("사용자 정보 수정 완료: {}", email);
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();;
+            User updatedUser = userService.whoareyou(authentication.getName());
+
+
+            Company company = companyRepository.findById(request.getCompany() == null ? -9999L : request.getCompany()).orElseThrow(() -> new RuntimeException("회사 없음도 없음"));
+            updatedUser.setCompany(company.getName());
+            updatedUser.setJob(request.getJob());
+
+            userService.updateUser(updatedUser);
+
+            UserUpdateResponse response = new UserUpdateResponse();
+            response.setMsg("회원 직무 / 회사 수정 성공!!");
+
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             log.error("사용자 정보 수정 실패: {}", e.getMessage());

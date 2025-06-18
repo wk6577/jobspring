@@ -79,43 +79,8 @@ public class UserService {
     }
 
     @Transactional
-    public User updateUser(String email, UserUpdateRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
-        // 수정할 필드들 업데이트
-        if (request.getName() != null && !request.getName().trim().isEmpty()) {
-            user.setName(request.getName().trim());
-        }
-        
-        if (request.getBirth() != null) {
-            user.setBirth(request.getBirthAsLocalDate());
-        }
-        
-        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
-            user.setPhoneNumber(request.getPhoneNumber().trim());
-        }
-        
-        if (request.getGender() != null && !request.getGender().trim().isEmpty()) {
-            // 문자열을 Gender enum으로 변환
-            try {
-                Gender gender = Gender.valueOf(request.getGender().toLowerCase());
-                user.setGender(gender);
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException("유효하지 않은 성별 값입니다: " + request.getGender());
-            }
-        }
-
-        // job과 company 필드 업데이트
-        if (request.getJob() != null) {
-            user.setJob(request.getJob());
-        }
-        
-        if (request.getCompany() != null) {
-            user.setCompany(request.getCompany());
-        }
-
-        return userRepository.save(user);
+    public void updateUser(User user) {
+        userRepository.save(user);
     }
 
     @Transactional
