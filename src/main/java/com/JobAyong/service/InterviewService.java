@@ -157,4 +157,25 @@ public class InterviewService {
 
         interviewArchiveRepository.delete(archive);
     }
+    
+    /*@apiNote 면접 평가 타이틀 수정
+     * @author AI
+     * */
+    @Transactional
+    public void updateArchiveTitle(Integer id, String newTitle) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userService.whoareyou(email);
+        
+        InterviewArchive archive = interviewArchiveRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("유효하지 않은 아카이브 아이디입니다."));
+        
+        // 권한 확인
+        if(archive.getUser() != user) {
+            throw new RuntimeException("해당 아카이브에 대한 권한이 없습니다.");
+        }
+        
+        archive.setArchive_name(newTitle);
+        interviewArchiveRepository.save(archive);
+    }
 }

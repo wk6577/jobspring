@@ -32,20 +32,26 @@ public class SecurityConfig {
                     config.setAllowCredentials(true);
                     config.setMaxAge(3600L);
                     return config;
-            }))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/user/signup", "/api/auth/login", "/api/company/**").permitAll()
-                .requestMatchers("/api/user/check-email").permitAll() // 이메일 중복 체크 허용
-                .requestMatchers("/api/auth/me").authenticated() // 인증된 사용자만 접근 가능
-                .requestMatchers("/api/user/**").authenticated() // 인증된 사용자만 접근 가능
-                .requestMatchers("/api/interview/**").authenticated()
-                .requestMatchers("/customInterviewController/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
+                }))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/user/signup",
+                                "/api/auth/login",
+                                "/api/company/**",
+                                "/api/user/check-email",
+                                "/customInterviewController/**",
+                                "/api/inquiries",
+                                "/api/inquiries/**"
+                        ).permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/interview/**").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -54,4 +60,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-} 
+}
