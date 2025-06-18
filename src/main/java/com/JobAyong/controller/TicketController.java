@@ -30,6 +30,17 @@ public class TicketController {
         }
     }
 
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteInquiry(@PathVariable Long id) {
+        try {
+            ticketRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("삭제 실패: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{email}")
     public ResponseEntity<List<Ticket>> getInquiriesByEmail(@PathVariable String email) {
         List<Ticket> list = ticketRepository.findByEmailOrderByCreatedAtDesc(email);
