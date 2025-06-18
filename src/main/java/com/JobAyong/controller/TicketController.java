@@ -45,7 +45,7 @@ public class TicketController {
     public ResponseEntity<?> updateInquiry(@PathVariable Long id, @RequestBody Ticket ticket) {
         try {
             Ticket existingTicket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
-            existingTicket.setReportReason(ticket.getReportReason());
+            existingTicket.setTicketComment(ticket.getTicketComment());
             existingTicket.setStatus(ticket.getStatus());
             ticketRepository.save(existingTicket);
             return ResponseEntity.ok(existingTicket);

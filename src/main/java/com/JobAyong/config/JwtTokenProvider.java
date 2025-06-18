@@ -35,6 +35,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(email)
+                .claim("email", email)
                 .claim("name", name)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
@@ -89,4 +90,4 @@ public class JwtTokenProvider {
             return true;
         }
     }
-} 
+}
