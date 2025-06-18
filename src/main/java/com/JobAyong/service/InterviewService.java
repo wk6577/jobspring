@@ -86,7 +86,7 @@ public class InterviewService {
      * */
     @Transactional
     public void saveAnswerAndEval(createNewInterviewQuestionAndEvalRequest request){
-        User user = userService.whoareyou(request.getEmail()); // 예외 발생 가능(나중에 토큰 인증기능으로 대체)
+        userService.whoareyou(request.getEmail()); // 예외 발생 가능(나중에 토큰 인증기능으로 대체)
 
         createNewInterviewQuestionAndEvalRequest.EvaluationDTO result_of_eval = request.getEvaluation();
         Integer interviewArchiveId = request.getInterviewArchiveId();
