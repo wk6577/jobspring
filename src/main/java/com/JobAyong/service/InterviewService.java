@@ -56,7 +56,13 @@ public class InterviewService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         User user = userService.whoareyou(email);
-        Company company = companyService.findById(request.getCompanyId()); // 예외 발생 구간02
+
+        Company company;
+        if(request.getCompanyId() == null){
+            company = companyService.findById(-9999L);
+        }else {
+            company = companyService.findById(request.getCompanyId());
+        }// 예외 발생 구간02
 
         InterviewArchive new_interviewArchive = new InterviewArchive();
         new_interviewArchive.setUser(user);
