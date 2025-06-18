@@ -36,10 +36,11 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/user/signup", "/api/auth/login", "/api/company/**", "/api/interview/**").permitAll()
+                .requestMatchers("/api/user/signup", "/api/auth/login", "/api/company/**").permitAll()
                 .requestMatchers("/api/user/check-email").permitAll() // 이메일 중복 체크 허용
                 .requestMatchers("/api/auth/me").authenticated() // 인증된 사용자만 접근 가능
                 .requestMatchers("/api/user/**").authenticated() // 인증된 사용자만 접근 가능
+                .requestMatchers("/api/interview/**").authenticated()
                 .requestMatchers("/customInterviewController/**").permitAll()
                 .anyRequest().authenticated()
             )

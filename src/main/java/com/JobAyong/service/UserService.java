@@ -89,7 +89,7 @@ public class UserService {
         }
         
         if (request.getBirth() != null) {
-            user.setBirth(request.getBirth());
+            user.setBirth(request.getBirthAsLocalDate());
         }
         
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {

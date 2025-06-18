@@ -18,7 +18,7 @@ public class InterviewEval {
     private Integer interviewEvalId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "interview_archive_id", nullable = false)
+    @JoinColumn(name = "interview_archive_id", nullable = false, unique = true)
     private InterviewArchive interviewArchive;
 
     @Column(name = "eval_score")
