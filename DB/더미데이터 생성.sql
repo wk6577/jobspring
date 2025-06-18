@@ -14,6 +14,17 @@ INSERT INTO company (
     company_id, name, industry, size, employees, establishment, ceo, revenue,
     address, homepage, history, main_business, created_at, updated_at
 ) VALUES (
+    -9999, '회사 없음', NULL, 'LARGE',
+    NULL, NULL,
+    NULL, NULL, NULL,
+    NULL, NULL, NULL,
+    NOW(), NOW()
+);
+
+INSERT INTO company (
+    company_id, name, industry, size, employees, establishment, ceo, revenue,
+    address, homepage, history, main_business, created_at, updated_at
+) VALUES (
     NULL, '삼성전자', '전기/전자/제어', 'LARGE',
     98387, '1969-01-13',
     '한종희', '158조 3,720억 8천만 원 (2013)', '경기 수원시 영통구 삼성로 129',

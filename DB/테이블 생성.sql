@@ -209,3 +209,14 @@ CREATE TABLE `report` (
     FOREIGN KEY (`email`) REFERENCES `user` (`email`),
     FOREIGN KEY (`target_type_id`) REFERENCES `target_type` (`target_type_id`)
 ); 
+
+CREATE TABLE `ticket` (
+	`ticket_id`	INT AUTO_INCREMENT	NOT NULL,
+	`email`	VARCHAR(255)	NOT NULL,
+	`ticket_comment`	TEXT	NOT NULL,
+	`status`	ENUM('pending', 'done')	NULL,
+	`created_at`	TIMESTAMP	NULL	DEFAULT CURRENT_TIMESTAMP,
+	`deleted_at`	TIMESTAMP	NULL,
+    PRIMARY KEY (`ticket_id`),
+    FOREIGN KEY (`email`) REFERENCES `user` (`email`)
+);
