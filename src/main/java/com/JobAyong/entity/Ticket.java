@@ -4,24 +4,18 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "report")
+@Table(name = "ticket")
 public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "report_id")
-    private Long reportId;
+    @Column(name = "ticket_id")
+    private Long ticketId;
 
     private String email;
 
-    @Column(name = "target_type_id")
-    private int targetTypeId;
-
-    @Column(name = "target_id")
-    private int targetId;
-
-    @Column(name = "report_reason")
-    private String reportReason;
+    @Column(name = "ticket_comment")
+    private String ticketComment;
 
     private String status;
 
@@ -31,12 +25,12 @@ public class Ticket {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    public Long getReportId() {
-        return reportId;
+    public Long getTicketId() {
+        return ticketId;
     }
 
-    public void setReportId(Long reportId) {
-        this.reportId = reportId;
+    public void setTicketId(Long ticketId) {
+        this.ticketId = ticketId;
     }
 
     public String getEmail() {
@@ -47,28 +41,12 @@ public class Ticket {
         this.email = email;
     }
 
-    public int getTargetTypeId() {
-        return targetTypeId;
+    public String getTicketComment() {
+        return ticketComment;
     }
 
-    public void setTargetTypeId(int targetTypeId) {
-        this.targetTypeId = targetTypeId;
-    }
-
-    public int getTargetId() {
-        return targetId;
-    }
-
-    public void setTargetId(int targetId) {
-        this.targetId = targetId;
-    }
-
-    public String getReportReason() {
-        return reportReason;
-    }
-
-    public void setReportReason(String reportReason) {
-        this.reportReason = reportReason;
+    public void setTicketComment(String ticketComment) {
+        this.ticketComment = ticketComment;
     }
 
     public String getStatus() {
