@@ -41,6 +41,20 @@ public class TicketController {
         }
     }
 
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateInquiry(@PathVariable Long id, @RequestBody Ticket ticket) {
+        try {
+            Ticket existingTicket = ticketRepository.findById(id).orElseThrow(() -> new RuntimeException("Ticket not found"));
+            existingTicket.setReportReason(ticket.getReportReason());
+            existingTicket.setStatus(ticket.getStatus());
+            ticketRepository.save(existingTicket);
+            return ResponseEntity.ok(existingTicket);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("수정 실패: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{email}")
     public ResponseEntity<List<Ticket>> getInquiriesByEmail(@PathVariable String email) {
         List<Ticket> list = ticketRepository.findByEmailOrderByCreatedAtDesc(email);
