@@ -3,12 +3,11 @@ package com.JobAyong.service;
 import com.JobAyong.config.JwtTokenProvider;
 import com.JobAyong.constant.UserRole;
 import com.JobAyong.constant.Gender;
-import com.JobAyong.dto.LoginResponse;
-import com.JobAyong.dto.PasswordChangeRequest;
-import com.JobAyong.dto.UserSignUpRequest;
-import com.JobAyong.dto.UserUpdateRequest;
+import com.JobAyong.dto.*;
 import com.JobAyong.entity.User;
 import com.JobAyong.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -78,9 +77,26 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    /*@apiNote 유저 회사, 직무 업데이트용 함수
+    * @author 나세호
+    * */
     @Transactional
-    public void updateUser(User user) {
-        userRepository.save(user);
+    public UserUpdateResponse updateUser(User updatedUser, UserUpdateRequest request) throws JsonProcessingException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String companyJson = objectMapper.writeValueAsString(request.getCompany());
+        String jobJson = objectMapper.writeValueAsString(request.getJob());
+
+        updatedUser.setCompany(companyJson);
+        updatedUser.setJob(jobJson);
+
+        userRepository.save(updatedUser);
+
+        UserUpdateResponse response = new UserUpdateResponse();
+        response.setMsg("회원 직무 / 회사 수정 성공!!");
+
+        return  response;
     }
 
     @Transactional

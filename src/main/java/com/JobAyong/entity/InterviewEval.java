@@ -1,5 +1,6 @@
 package com.JobAyong.entity;
 
+import com.JobAyong.constant.InterviewQuestionType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +21,9 @@ public class InterviewEval {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "interview_archive_id", nullable = false, unique = true)
     private InterviewArchive interviewArchive;
+
+    @Column(name = "eval_mode")
+    private InterviewQuestionType mode;
 
     @Column(name = "eval_score")
     private int eval_score;

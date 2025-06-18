@@ -2,8 +2,10 @@ package com.JobAyong.service;
 
 import com.JobAyong.constant.InterviewQuestionType;
 import com.JobAyong.constant.InterviewStatus;
-import com.JobAyong.dto.createNewInterviewArchiveRequest;
-import com.JobAyong.dto.createNewInterviewQuestionAndEvalRequest;
+import com.JobAyong.dto.CreateNewInterviewArchiveRequest;
+import com.JobAyong.dto.CreateNewInterviewQuestionAndEvalRequest;
+import com.JobAyong.dto.GetPrevImprovementRequest;
+import com.JobAyong.dto.GetPrevImprovementResponse;
 import com.JobAyong.entity.*;
 import com.JobAyong.repository.InterviewAnswerRepository;
 import com.JobAyong.repository.InterviewArchiveRepository;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +47,7 @@ public class InterviewService {
             case "personality" -> InterviewQuestionType.PERSONALITY;
             case "technical" -> InterviewQuestionType.TECHNICAL;
             case "situational" -> InterviewQuestionType.SITUATIONAL;
+            case "custom" -> InterviewQuestionType.CUSTOM;
             default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
     }
@@ -52,7 +56,7 @@ public class InterviewService {
      *@author 나세호
      * */
     @Transactional
-    public Integer createArchive(createNewInterviewArchiveRequest request){
+    public Integer createArchive(CreateNewInterviewArchiveRequest request){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         User user = userService.whoareyou(email);
@@ -69,6 +73,7 @@ public class InterviewService {
         new_interviewArchive.setCompany(company);
         new_interviewArchive.setPosition(request.getPosition());
         new_interviewArchive.setStatus(InterviewStatus.PENDING);
+        new_interviewArchive.setMode(setQuestionType(request.getArchiveMode()));
         new_interviewArchive.setArchive_name(request.getArchiveName());
 
         interviewArchiveRepository.save(new_interviewArchive);
@@ -96,12 +101,12 @@ public class InterviewService {
      *@author 나세호
      * */
     @Transactional
-    public void saveAnswerAndEval(createNewInterviewQuestionAndEvalRequest request){
+    public void saveAnswerAndEval(CreateNewInterviewQuestionAndEvalRequest request){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         User user = userService.whoareyou(email); // 예외 발생 가능(나중에 토큰 인증기능으로 대체)
 
-        createNewInterviewQuestionAndEvalRequest.EvaluationDTO result_of_eval = request.getEvaluation();
+        CreateNewInterviewQuestionAndEvalRequest.EvaluationDTO result_of_eval = request.getEvaluation();
         Integer interviewArchiveId = request.getInterviewArchiveId();
         List<String> answerList = request.getAnswers();
 
@@ -142,6 +147,7 @@ public class InterviewService {
         new_eval.setEval_solution(result_of_eval.getSolution());
         new_eval.setEval_improvment(result_of_eval.getImprovment());
         new_eval.setInterviewArchive(interviewArchive);
+        new_eval.setMode(setQuestionType(request.getEvalMode()));
 
         interviewEvalRepository.save(new_eval);
 
@@ -162,6 +168,41 @@ public class InterviewService {
         }
 
         interviewArchiveRepository.delete(archive);
+    }
+
+    @Transactional(readOnly = true)
+    public GetPrevImprovementResponse getPrevImprovements(GetPrevImprovementRequest request){
+        InterviewQuestionType target = setQuestionType(request.getMode());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.whoareyou(authentication.getName());
+
+        List<InterviewArchive> archiveList = interviewArchiveRepository.findByUser(user);
+        if(archiveList.isEmpty()){
+            throw new RuntimeException("생성된 아카이브 없음 생성 필요");
+        }
+
+        InterviewArchive secondLatestMatchingArchive = archiveList.stream()
+                .filter(archive -> target.equals(archive.getMode()))
+                .sorted(Comparator.comparing(InterviewArchive::getCreatedAt).reversed())
+                .skip(1)
+                .findFirst()
+                .orElse(null);
+
+        if (secondLatestMatchingArchive == null) {
+            return null;
+        }
+
+        InterviewEval lastEval = interviewEvalRepository.findByInterviewArchive(secondLatestMatchingArchive).orElse(null);
+
+        if (lastEval == null) {
+            return null;
+        }
+
+        GetPrevImprovementResponse response = new GetPrevImprovementResponse();
+        response.setPrev_badpoints(lastEval.getEval_bad_summary());
+        response.setPrev_baddescription(lastEval.getEval_bad_description());
+
+        return response;
     }
     
     /*@apiNote 면접 평가 타이틀 수정

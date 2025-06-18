@@ -5,6 +5,8 @@ import com.JobAyong.entity.*;
 import com.JobAyong.repository.*;
 import com.JobAyong.service.InterviewService;
 import com.JobAyong.service.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -80,20 +82,13 @@ public class UserController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();;
             User updatedUser = userService.whoareyou(authentication.getName());
 
-
-            Company company = companyRepository.findById(request.getCompany() == null ? -9999L : request.getCompany()).orElseThrow(() -> new RuntimeException("회사 없음도 없음"));
-            updatedUser.setCompany(company.getName());
-            updatedUser.setJob(request.getJob());
-
-            userService.updateUser(updatedUser);
-
-            UserUpdateResponse response = new UserUpdateResponse();
-            response.setMsg("회원 직무 / 회사 수정 성공!!");
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(userService.updateUser(updatedUser, request));
         } catch (RuntimeException e) {
             log.error("사용자 정보 수정 실패: {}", e.getMessage());
             return ResponseEntity.notFound().build();
+        } catch (JsonProcessingException e) {
+            log.error("사용자 정보 Json 파싱 실패: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 

@@ -1,14 +1,16 @@
 package com.JobAyong.dto;
 
+import com.JobAyong.constant.InterviewQuestionType;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class createNewInterviewQuestionAndEvalRequest {
+public class CreateNewInterviewQuestionAndEvalRequest {
     private EvaluationDTO evaluation;
     private Integer interviewArchiveId;
     private List<String> answers;
+    private String evalMode;
 
     @Data
     public static class EvaluationDTO {

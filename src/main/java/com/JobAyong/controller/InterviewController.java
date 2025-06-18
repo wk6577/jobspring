@@ -1,9 +1,6 @@
 package com.JobAyong.controller;
 
-import com.JobAyong.dto.createNewInterviewArchiveRequest;
-import com.JobAyong.dto.createNewInterviewArchiveResponse;
-import com.JobAyong.dto.createNewInterviewQuestionAndEvalRequest;
-import com.JobAyong.dto.createNewInterviewQuestionAndEvalResponse;
+import com.JobAyong.dto.*;
 import com.JobAyong.service.InterviewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,22 +22,31 @@ public class InterviewController {
     * @author 나세호
     * */
     @PostMapping
-    public ResponseEntity<createNewInterviewArchiveResponse> createNewInterviewArchive(@RequestBody  createNewInterviewArchiveRequest request){
+    public ResponseEntity<CreateNewInterviewArchiveResponse> createNewInterviewArchive(@RequestBody CreateNewInterviewArchiveRequest request){
         int interviewArchiveID = interviewService.createArchive(request);
 
-        createNewInterviewArchiveResponse response = new createNewInterviewArchiveResponse();
+        CreateNewInterviewArchiveResponse response = new CreateNewInterviewArchiveResponse();
         response.setInterviewArchiveId(interviewArchiveID);
         return ResponseEntity.ok(response);
+    }
+
+    /*@apiNote 이전 평가 가져오는 API
+     * @author 나세호
+     * */
+    @PostMapping("/prevImprovement")
+    public ResponseEntity<GetPrevImprovementResponse> getPrevImprovements(@RequestBody GetPrevImprovementRequest request){
+        GetPrevImprovementResponse result = interviewService.getPrevImprovements(request);
+        return ResponseEntity.ok(result);
     }
 
     /*@apiNote 모의 면접 평가 및 답변 저장
      * @author 나세호
      * */
     @PostMapping("/answer/eval")
-    public ResponseEntity<createNewInterviewQuestionAndEvalResponse> createNewInterviewQuestionAndEval(@RequestBody createNewInterviewQuestionAndEvalRequest request){
+    public ResponseEntity<CreateNewInterviewQuestionAndEvalResponse> createNewInterviewQuestionAndEval(@RequestBody CreateNewInterviewQuestionAndEvalRequest request){
         interviewService.saveAnswerAndEval(request);
 
-        createNewInterviewQuestionAndEvalResponse response = new createNewInterviewQuestionAndEvalResponse();
+        CreateNewInterviewQuestionAndEvalResponse response = new CreateNewInterviewQuestionAndEvalResponse();
         response.setMsg("자동 저장 완료");
         return ResponseEntity.ok(response);
     }

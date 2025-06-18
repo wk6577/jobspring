@@ -1,5 +1,6 @@
 package com.JobAyong.entity;
 
+import com.JobAyong.constant.InterviewQuestionType;
 import com.JobAyong.constant.InterviewStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -25,6 +26,9 @@ public class InterviewArchive {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id")
     private Company company;
+
+    @Column(name = "archive_mode")
+    private InterviewQuestionType mode;
 
     @Column(name = "archive_name")
     private String archive_name;

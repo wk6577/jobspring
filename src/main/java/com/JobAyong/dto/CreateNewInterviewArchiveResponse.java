@@ -3,6 +3,6 @@ package com.JobAyong.dto;
 import lombok.Data;
 
 @Data
-public class createNewInterviewArchiveResponse {
+public class CreateNewInterviewArchiveResponse {
     private Integer interviewArchiveId;
 }
