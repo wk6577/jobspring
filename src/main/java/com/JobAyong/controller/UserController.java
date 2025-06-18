@@ -147,6 +147,12 @@ public class UserController {
                 evaluation.put("position", archive.getPosition());
                 evaluation.put("status", archive.getStatus());
                 
+                // 평가 점수 조회 및 추가
+                InterviewEval eval = interviewEvalRepository.findByInterviewArchiveInterviewArchiveId(archive.getInterviewArchiveId());
+                if (eval != null) {
+                    evaluation.put("score", eval.getEval_score());
+                }
+                
                 evaluationList.add(evaluation);
             }
             
