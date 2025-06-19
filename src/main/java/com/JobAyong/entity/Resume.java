@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
-import com.JobAyong.constant.ResumeType;
-
 @Entity
 @Table(name = "resume")
 @Getter
@@ -24,15 +22,8 @@ public class Resume {
     @Column(name = "resume_title", nullable = false)
     private String resumeTitle;
 
-    @Column(name = "resume_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "resume_text", columnDefinition = "TEXT")
     private String resumeText;
-
-    @Column(name = "resume_file")
-    private String resumeFile;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "resume_type", nullable = false)
-    private ResumeType resumeType;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

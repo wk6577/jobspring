@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.JobAyong.dto.ResumeRequest;
 import com.JobAyong.dto.ResumeResponse;
@@ -43,6 +45,31 @@ public class ResumeController {
         User user = userRepository.findByEmail(request.getUserEmail())
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Resume resume = resumeService.toResumeEntity(request, user);
+        Resume saved = resumeService.save(resume);
+        ResumeResponse response = resumeService.toResumeResponse(saved);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/file")
+    public ResponseEntity<ResumeResponse> createResumeFromFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("userEmail") String userEmail,
+            @RequestParam("resumeTitle") String resumeTitle) {
+        
+        // User 조회
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
+        // 파일에서 텍스트 추출
+        String extractedText = resumeService.extractTextFromFile(file);
+        
+        // Resume 엔티티 생성
+        Resume resume = new Resume();
+        resume.setUser(user);
+        resume.setResumeTitle(resumeTitle);
+        resume.setResumeText(extractedText);
+        
+        // 저장
         Resume saved = resumeService.save(resume);
         ResumeResponse response = resumeService.toResumeResponse(saved);
         return ResponseEntity.ok(response);

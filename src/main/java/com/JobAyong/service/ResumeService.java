@@ -1,10 +1,17 @@
 package com.JobAyong.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.JobAyong.entity.Resume;
 import com.JobAyong.entity.ResumeEval;
@@ -15,7 +22,6 @@ import com.JobAyong.dto.ResumeResponse;
 import com.JobAyong.dto.ResumeEvalRequest;
 import com.JobAyong.dto.ResumeEvalResponse;
 import com.JobAyong.entity.User;
-import com.JobAyong.constant.ResumeType;
 
 @Service
 public class ResumeService {
@@ -68,11 +74,8 @@ public class ResumeService {
         resume.setUser(user);
         resume.setResumeTitle(dto.getResumeTitle());
         resume.setResumeText(dto.getResumeText());
-        resume.setResumeFile(dto.getResumeFile());
         // String -> Enum 변환
-        if (dto.getResumeType() != null) {
-            resume.setResumeType(ResumeType.valueOf(dto.getResumeType().toUpperCase()));
-        }
+
         return resume;
     }
 
@@ -83,9 +86,6 @@ public class ResumeService {
         dto.setUserEmail(resume.getUser() != null ? resume.getUser().getEmail() : null);
         dto.setResumeTitle(resume.getResumeTitle());
         dto.setResumeText(resume.getResumeText());
-        dto.setResumeFile(resume.getResumeFile());
-        // Enum -> String 변환
-        dto.setResumeType(resume.getResumeType() != null ? resume.getResumeType().name().toLowerCase() : null);
         dto.setCreatedAt(resume.getCreatedAt());
         dto.setUpdatedAt(resume.getUpdatedAt());
         dto.setDeletedAt(resume.getDeletedAt());
@@ -117,5 +117,46 @@ public class ResumeService {
         dto.setCreatedAt(eval.getCreatedAt());
         dto.setDeletedAt(eval.getDeletedAt());
         return dto;
+    }
+
+    // 파일에서 텍스트 추출
+    public String extractTextFromFile(MultipartFile file) {
+        try {
+            String fileName = file.getOriginalFilename();
+            if (fileName == null) {
+                throw new RuntimeException("파일명을 확인할 수 없습니다.");
+            }
+            
+            String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+            
+            switch (extension) {
+                case ".pdf":
+                    return extractTextFromPdf(file.getInputStream());
+                case ".docx":
+                    return extractTextFromDocx(file.getInputStream());
+                case ".txt":
+                    return new String(file.getBytes(), "UTF-8");
+                default:
+                    throw new RuntimeException("지원하지 않는 파일 형식입니다. PDF, DOCX, TXT 파일만 지원합니다.");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("파일 읽기 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    // PDF에서 텍스트 추출
+    private String extractTextFromPdf(InputStream inputStream) throws IOException {
+        try (PDDocument document = PDDocument.load(inputStream)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            return stripper.getText(document);
+        }
+    }
+    
+    // DOCX에서 텍스트 추출
+    private String extractTextFromDocx(InputStream inputStream) throws IOException {
+        try (XWPFDocument document = new XWPFDocument(inputStream)) {
+            XWPFWordExtractor extractor = new XWPFWordExtractor(document);
+            return extractor.getText();
+        }
     }
 }
