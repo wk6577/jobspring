@@ -41,6 +41,9 @@ public class InterviewService {
     * */
     public InterviewQuestionType setQuestionType(String type){
         String mode = type.trim();
+
+        System.out.println("전달된 값: " + mode);
+
         return switch (mode) {
             case "general" -> InterviewQuestionType.GENERAL;
             case "pressure" -> InterviewQuestionType.PRESSURE;
@@ -61,16 +64,9 @@ public class InterviewService {
         String email = authentication.getName();
         User user = userService.whoareyou(email);
 
-        Company company;
-        if(request.getCompanyId() == null){
-            company = companyService.findById(-9999L);
-        }else {
-            company = companyService.findById(request.getCompanyId());
-        }// 예외 발생 구간02
-
         InterviewArchive new_interviewArchive = new InterviewArchive();
         new_interviewArchive.setUser(user);
-        new_interviewArchive.setCompany(company);
+        new_interviewArchive.setCompany(request.getCompanyName());
         new_interviewArchive.setPosition(request.getPosition());
         new_interviewArchive.setStatus(InterviewStatus.PENDING);
         new_interviewArchive.setMode(setQuestionType(request.getArchiveMode()));
@@ -147,6 +143,7 @@ public class InterviewService {
         new_eval.setEval_solution(result_of_eval.getSolution());
         new_eval.setEval_improvment(result_of_eval.getImprovment());
         new_eval.setInterviewArchive(interviewArchive);
+
         new_eval.setMode(setQuestionType(request.getEvalMode()));
 
         interviewEvalRepository.save(new_eval);

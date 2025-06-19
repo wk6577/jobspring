@@ -22,6 +22,7 @@ public class InterviewEval {
     @JoinColumn(name = "interview_archive_id", nullable = false, unique = true)
     private InterviewArchive interviewArchive;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "eval_mode")
     private InterviewQuestionType mode;
 

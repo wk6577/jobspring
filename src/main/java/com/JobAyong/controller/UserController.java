@@ -136,7 +136,7 @@ public class UserController {
                 evaluation.put("title", archive.getArchive_name());
                 evaluation.put("type", "interview");
                 evaluation.put("createdAt", archive.getCreatedAt());
-                evaluation.put("companyName", archive.getCompany() != null ? archive.getCompany().getName() : null);
+                evaluation.put("companyName", archive.getCompany() != null ? archive.getCompany() : null);
                 evaluation.put("position", archive.getPosition());
                 evaluation.put("status", archive.getStatus());
                 
@@ -192,7 +192,7 @@ public class UserController {
             result.put("title", archive.getArchive_name());
             result.put("type", "interview");
             result.put("createdAt", archive.getCreatedAt());
-            result.put("companyName", archive.getCompany() != null ? archive.getCompany().getName() : null);
+            result.put("companyName", archive.getCompany() != null ? archive.getCompany() : null);
             result.put("position", archive.getPosition());
             
             // 평가 정보 조회 및 추가

@@ -23,10 +23,10 @@ public class InterviewArchive {
     @JoinColumn(name = "email", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
-    private Company company;
+    @Column(name = "company")
+    private String company;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "archive_mode")
     private InterviewQuestionType mode;
 
