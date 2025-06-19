@@ -250,12 +250,15 @@ public class UserController {
             result.put("companyName", archive.getCompany() != null ? archive.getCompany() : null);
             result.put("position", archive.getPosition());
             result.put("archive_mode", archive.getMode().toString()); // archive_mode 추가
+
             
             // 평가 정보 조회 및 추가
             InterviewEval eval = interviewEvalRepository.findByInterviewArchiveInterviewArchiveId(archive.getInterviewArchiveId());
             if (eval != null) {
                 result.put("score", eval.getEval_score());
                 result.put("comment", eval.getEval_reason());
+                result.put("prev_summary", eval.getPrev_summary());
+                result.put("prev_description", eval.getPrev_description());
                 
                 // 강점 정보
                 List<Map<String, String>> goods = new ArrayList<>();
