@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
+import com.JobAyong.constant.ResumeType;
+
 @Entity
 @Table(name = "resume")
 @Getter
@@ -52,7 +54,3 @@ public class Resume {
         updatedAt = LocalDateTime.now();
     }
 }
-
-enum ResumeType {
-    TEXT, FILE
-} 
