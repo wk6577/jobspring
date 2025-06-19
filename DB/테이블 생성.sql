@@ -186,13 +186,11 @@ CREATE TABLE `resume_eval` (
     `resume_id` INT NOT NULL,
     `email` VARCHAR(255) NOT NULL,
     `resume_eval_comment` TEXT NULL,
-    `resume_eval_score` INT NULL,
     `resume_org` TEXT NOT NULL COMMENT '평가 받는 텍스트',
     `resume_log` TEXT NOT NULL COMMENT 'ai가 수정해준 부분에서 사용자가 원하는 부분만 커밋한 텍스트 전체',
     `resume_eval_version` INT NOT NULL DEFAULT 1,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
-    `position` VARCHAR(100) NULL,
     PRIMARY KEY (`resume_eval_id`),
     FOREIGN KEY (`resume_id`) REFERENCES `resume` (`resume_id`),
     FOREIGN KEY (`email`) REFERENCES `user` (`email`)

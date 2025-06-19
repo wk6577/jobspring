@@ -2,12 +2,19 @@
 
 -- user 테이블 더미데이터
 INSERT INTO `user` (`email`, `role`, `password`, `name`, `birth`, `phone_number`, `gender`) VALUES
+('a@naver.com', 'user', '$2a$10$Ff4hVqH3zchRs1PChAZ39eaVwF7982vBL/IOy5s.6Raf.Xq9rFooq', '테스트', '2025-06-14', '010-0000-0000', 'male'),
+('aa@naver.com', 'user', '$2a$10$n9Ej.ugfU/H9D.lQEs.8Suj357FWn2.LntHLU5W/qnpUrvqsEf7Ai', '뉴테스트', '2025-06-06', '010-5418-5468', 'male'),
+('aaa@naver.com', 'user', '$2a$10$FLcfBUb1gVy2oOBeUr4w8uuxOSAV1mKD4cn2B8lqCjOECmJymRdd.', 're뉴테스트', '2025-06-04', '010-5484-6468', 'female'),
 ('abc@abc.com', 'user', '$2a$10$Q.F6TVwnlJ0sXKiyILwoA.8C3lA.hWJbbWPKiSYVDkjs.Rho./no.', '김철수', '2025-06-04', '010-1234-5678', 'male'),
 ('admin@example.com', 'admin', '$2a$10$EM5HoNM6z3k.xKZICyfM3.uqIh792ZmV6/QlpnyNl1qZVBMWBZRJC', '관리자', '1985-12-31', '010-3456-7890', 'female'),
-('csa4550@gmail.com', 'user', '$2a$10$sWGjlPP5EKA2IjF0h9D1xOt36fky9497B2PN93IBgvHGF3Hd.Q9Vq', '최선아', '2025-06-13', '010-2777-6767', 'female'),
+('b@naver.com', 'user', '$2a$10$.Xq7i8Om17ZlDOvXUTXiB.1FWpUGzLIHEvn6vsQSasluO/st5ymJS', '신', '2025-06-18', '010-1000-1111', 'male'),
+('bb@naver.com', 'user', '$2a$10$QmtohbCpDYX3STjyiSWACuLRptKEEFEZA/JB.wRxRij7LFXfnQgka', '신', '2025-06-18', '010-1000-1111', 'male'),
+('csa4550@gmail.com', 'user', '$2a$10$sWGjlPP5EKA2IjF0h9D1xOt36fky9497B2PN93IBgvHGF3Hd.Q9Vq', '최선아', '2025-06-11', '010-2777-8899', 'female'),
+('home@naver.com', 'user', '$2a$10$LI/VbdftToHegTN7Di0.9OtccKPm3kNSicRXqR6Xq5GDAArev8u66', '집가고싶다', '2025-06-11', '010-8468-4684', 'male'),
 ('kalons@naver.com', 'user', '$2a$10$X1iFRCGz8EAEJYLWgxDSB.xiHPIGpPD8D.ZsiiraW8IoMN5S.c/Ci', '김타코', '1982-04-27', '010-4633-7277', 'male'),
-('wtf@gmail.com', 'user', '$2a$10$YDYFjF6sguQpg96A68HdROOl9KzOGdvs0ipH0RWAiN6aj3TG3MjU6', '이게뭐야', '2025-06-16', '010-0000-0000', 'male'),
+('wtf@gmail.com', 'admin', '$2a$10$YDYFjF6sguQpg96A68HdROOl9KzOGdvs0ipH0RWAiN6aj3TG3MjU6', '이게뭐야', '2025-06-16', '010-0000-0000', 'male'),
 ('yechul.shin@gmail.com', 'user', '$2a$10$XeMbiUJv300H0hrgy3RrP.LDngAsLrd5rLRO6MIMmsSEXa8lU.tjS', '신예철', '2025-06-16', '010-1111-1111', 'male');
+
 
 -- company 테이블 더미데이터
 INSERT INTO company (
@@ -44153,10 +44160,10 @@ INSERT INTO `voice_eval` (`voice_id`, `email`, `voice_eval_comment`, `voice_eval
 (3, 'admin@example.com', '적절한 톤과 속도로 말했습니다.', 8);
 
 -- resume_eval 테이블 더미데이터
-INSERT INTO `resume_eval` (`resume_id`, `email`, `resume_eval_comment`, `resume_eval_score`, `resume_org`, `resume_log`, `position`) VALUES
-(1, 'admin@example.com', '이력서가 잘 구성되어 있습니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '신입 개발자'),
-(2, 'abc@abc.com', '경력 사항이 상세합니다.', 9, '원본 이력서 내용', '수정된 이력서 내용', '시니어 개발자'),
-(3, 'admin@example.com', '포트폴리오가 인상적입니다.', 8, '원본 이력서 내용', '수정된 이력서 내용', '주니어 개발자');
+INSERT INTO `resume_eval` (`resume_id`, `email`, `resume_eval_comment`, `resume_org`, `resume_log`) VALUES
+(1, 'admin@example.com', '이력서가 잘 구성되어 있습니다.', '원본 이력서 내용', '수정된 이력서 내용'),
+(2, 'abc@abc.com', '경력 사항이 상세합니다.', '원본 이력서 내용', '수정된 이력서 내용'),
+(3, 'admin@example.com', '포트폴리오가 인상적입니다.', '원본 이력서 내용', '수정된 이력서 내용');
 
 -- report 테이블 더미데이터
 INSERT INTO `report` (`email`, `target_type_id`, `target_id`, `report_reason`, `status`) VALUES
