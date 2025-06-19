@@ -12,6 +12,9 @@ public class CreateNewInterviewQuestionAndEvalRequest {
     private List<String> answers;
     private String evalMode;
 
+    private String prev_summary;
+    private String prev_description;
+
     @Data
     public static class EvaluationDTO {
         private Integer score;

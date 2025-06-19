@@ -56,6 +56,12 @@ public class InterviewEval {
     @Column(columnDefinition = "TEXT")
     private String eval_improvment;
 
+    @Column(columnDefinition = "TEXT")
+    private String prev_summary;
+
+    @Column(columnDefinition = "TEXT")
+    private String prev_description;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

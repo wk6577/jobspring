@@ -106,16 +106,16 @@ CREATE TABLE `voice` (
 CREATE TABLE `interview_archive` (
     `interview_archive_id` INT AUTO_INCREMENT NOT NULL,
     `email` VARCHAR(255) NOT NULL,
-    `company_id` INT NULL COMMENT '회사를 구분하는 고유 식별 번호',
+    `company` VARCHAR(255) NULL,
     `archive_name` VARCHAR(255) NOT NULL,
+    `archive_mode` ENUM('GENERAL', 'PRESSURE', 'PERSONALITY', 'TECHNICAL', 'SITUATIONAL', 'CUSTOM') NOT NULL,
     `position` VARCHAR(100) NULL COMMENT '직무/전문분야',
     `status` ENUM('PENDING', 'DONE') NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`interview_archive_id`),
-    FOREIGN KEY (`email`) REFERENCES `user` (`email`),
-    FOREIGN KEY (`company_id`) REFERENCES `company` (`company_id`)
+    FOREIGN KEY (`email`) REFERENCES `user` (`email`)
 );
 
 -- interview_question 테이블
@@ -147,6 +147,7 @@ CREATE TABLE `interview_answer` (
 CREATE TABLE `interview_eval` (
     `interview_eval_id` INT AUTO_INCREMENT NOT NULL,
     `interview_archive_id` INT NOT NULL,
+    `eval_mode` ENUM('GENERAL', 'PRESSURE', 'PERSONALITY', 'TECHNICAL', 'SITUATIONAL', 'CUSTOM') NOT NULL,
     `eval_score`	INT	NULL,
 	`eval_reason`	TEXT	NULL,
 	`eval_good_summary`	TEXT	NULL,
@@ -157,6 +158,8 @@ CREATE TABLE `interview_eval` (
 	`eval_cause`	TEXT	NULL,
 	`eval_solution`	TEXT	NULL,
 	`eval_improvment`	TEXT	NULL,
+    `prev_summary` TEXT NULL,
+    `prev_description` TEXT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
     PRIMARY KEY (`interview_eval_id`),

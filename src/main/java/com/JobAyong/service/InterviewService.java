@@ -42,8 +42,6 @@ public class InterviewService {
     public InterviewQuestionType setQuestionType(String type){
         String mode = type.trim();
 
-        System.out.println("전달된 값: " + mode);
-
         return switch (mode) {
             case "general" -> InterviewQuestionType.GENERAL;
             case "pressure" -> InterviewQuestionType.PRESSURE;
@@ -143,8 +141,11 @@ public class InterviewService {
         new_eval.setEval_solution(result_of_eval.getSolution());
         new_eval.setEval_improvment(result_of_eval.getImprovment());
         new_eval.setInterviewArchive(interviewArchive);
-
         new_eval.setMode(setQuestionType(request.getEvalMode()));
+
+        // 06.19 추가 - 나세호
+        new_eval.setPrev_summary(request.getPrev_summary());
+        new_eval.setPrev_description(request.getPrev_description());
 
         interviewEvalRepository.save(new_eval);
 
@@ -167,6 +168,9 @@ public class InterviewService {
         interviewArchiveRepository.delete(archive);
     }
 
+    /*@apiNote 이전 최신 평가 가져와서 save 해주는 함수
+    * @author 나세호
+    * */
     @Transactional(readOnly = true)
     public GetPrevImprovementResponse getPrevImprovements(GetPrevImprovementRequest request){
         InterviewQuestionType target = setQuestionType(request.getMode());
