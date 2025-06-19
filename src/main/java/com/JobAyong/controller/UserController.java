@@ -14,7 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +52,10 @@ public class UserController {
             User user = userService.findByEmail(email);
             log.info("조회된 사용자 정보 - 이름: {}, 생년월일: {}, 전화번호: {}, 성별: {}", 
                 user.getName(), user.getBirth(), user.getPhoneNumber(), user.getGender());
+
+            String savedFilename = user.getProfileImage();
+            String imageUrl = savedFilename != null ? "/images/" + savedFilename : null;
+            user.setProfileImage(imageUrl);
             
             UserInfoResponse response = new UserInfoResponse(
                 user.getEmail(),
@@ -57,7 +63,7 @@ public class UserController {
                 user.getBirth() != null ? user.getBirth().toString() : null,
                 user.getPhoneNumber(),
                 user.getGender() != null ? user.getGender().toString() : null,
-                null, // 프로필 이미지는 나중에 구현
+                user.getProfileImage(), // 사용자 프로필 URL
                 user.getJob(), // 직무 정보
                 user.getCompany() // 회사 정보
             );
@@ -71,7 +77,6 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
-
 
     /*@apiNote 사용자의 직무 회사를 수정하는 API
     * @author 나세호
@@ -91,6 +96,55 @@ public class UserController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+
+
+    // ********************************************************************************************
+    // 마이페이지 회원 정보 수정
+    // ********************************************************************************************
+    @PutMapping("/{email}")
+    public ResponseEntity<UserInfoResponse> updateUser(@PathVariable String email, @RequestBody UserProfileUpdateRequest request) {
+        try {
+            log.info("사용자 정보 수정 요청: {}", email);
+            User updatedUser = userService.updateUser(email, request);
+
+            UserInfoResponse response = new UserInfoResponse(
+                    updatedUser.getEmail(),
+                    updatedUser.getName(),
+                    updatedUser.getBirth() != null ? updatedUser.getBirth().toString() : null,
+                    updatedUser.getPhoneNumber(),
+                    updatedUser.getGender() != null ? updatedUser.getGender().toString() : null,
+                    updatedUser.getProfileImage(), // 프로필 이미지는 나중에 구현
+                    updatedUser.getJob(), // 직무 정보
+                    updatedUser.getCompany() // 회사 정보
+            );
+
+            log.info("사용자 정보 수정 완료: {}", email);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            log.error("사용자 정보 수정 실패: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+    // ********************************************************************************************
+
+
+    // ********************************************************************************************
+    // 마이페이지 프로필 이미지 수정
+    // ********************************************************************************************
+    @PostMapping("/profile-image")
+    public ResponseEntity<ProfileImageUploadResponse> uploadProfileImage(@RequestParam("email") String email,
+                                                                         @RequestParam("file") MultipartFile file)
+    {
+        log.info("사용자 정보 수정 요청: {}", email);
+        ProfileImageUploadResponse response =  userService.updateProfileImage(email, file);
+
+        log.info("사용자 프로필 정보 수정 완료: {}", email);
+        return ResponseEntity.ok(response);
+    }
+    // ********************************************************************************************
+
+
 
     @PutMapping("/{email}/password")
     public ResponseEntity<Void> changePassword(@PathVariable String email, @RequestBody PasswordChangeRequest request) {
