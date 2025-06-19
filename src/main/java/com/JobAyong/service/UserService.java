@@ -13,6 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -137,5 +142,74 @@ public class UserService {
     @Transactional
     public void delete(String email) {
         userRepository.deleteById(email);
+    }
+
+
+
+    @Transactional
+    public User updateUser(String email, UserProfileUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 수정할 필드들 업데이트
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            user.setName(request.getName().trim());
+        }
+
+        if (request.getBirth() != null) {
+            user.setBirth(request.getBirth());
+        }
+
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            user.setPhoneNumber(request.getPhoneNumber().trim());
+        }
+
+        if (request.getGender() != null && !request.getGender().trim().isEmpty()) {
+            // 문자열을 Gender enum으로 변환
+            try {
+                Gender gender = Gender.valueOf(request.getGender().toLowerCase());
+                user.setGender(gender);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("유효하지 않은 성별 값입니다: " + request.getGender());
+            }
+        }
+
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public ProfileImageUploadResponse updateProfileImage(String email, MultipartFile file){
+        try {
+            // 1. 유저 조회
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+            // 2. 파일 관련 정보
+            String originalFilename = file.getOriginalFilename();
+            String fileExt = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String savedFilename = UUID.randomUUID().toString() + fileExt;
+
+            // 3. 저장 경로
+            String uploadPath = "D:/T2/upload/image/";
+            File dir = new File(uploadPath);
+            if (!dir.exists()) dir.mkdirs();
+
+            String fullPath = uploadPath + savedFilename;
+
+            // 4. 실제 저장
+            file.transferTo(new File(fullPath));
+
+            // 5. DB 반영 (유저 정보에 저장된 파일명 추가)
+            user.setProfileImage(savedFilename);
+            user.setOriginalFilename(originalFilename);
+
+            userRepository.save(user); // 저장
+
+            // 6. 응답 생성
+            return new ProfileImageUploadResponse(originalFilename, savedFilename, "/images/" + savedFilename); // 프론트에서 접근할 수 있는 URL 경로로 지정
+
+        } catch (IOException e) {
+            throw new RuntimeException("이미지 저장 실패: " + e.getMessage());
+        }
     }
 } 

@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/api/inquiries",
                                 "/api/inquiries/**"
                         ).permitAll()
+                        .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/user/**").authenticated()
                         .requestMatchers("/api/interview/**").authenticated()

@@ -30,13 +30,18 @@ public class AuthController {
         String email = authentication.getName();
         
         User user = userService.findByEmail(email);
-        
+
+        String savedFilename = user.getProfileImage();
+        String imageUrl = savedFilename != null ? "/images/" + savedFilename : null;
+        user.setProfileImage(imageUrl);
+
         UserInfoResponse response = new UserInfoResponse();
         response.setEmail(user.getEmail());
         response.setName(user.getName());
         response.setBirth(user.getBirth().toString());
         response.setPhoneNumber(user.getPhoneNumber());
         response.setGender(user.getGender().name());
+        response.setProfile(user.getProfileImage());
         response.setJob(user.getJob());
         response.setCompany(user.getCompany());
         
