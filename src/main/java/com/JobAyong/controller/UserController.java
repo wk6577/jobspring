@@ -139,6 +139,7 @@ public class UserController {
                 evaluation.put("companyName", archive.getCompany() != null ? archive.getCompany() : null);
                 evaluation.put("position", archive.getPosition());
                 evaluation.put("status", archive.getStatus());
+                evaluation.put("archive_mode", archive.getMode().toString()); // archive_mode 추가
                 
                 // 평가 점수 조회 및 추가
                 InterviewEval eval = interviewEvalRepository.findByInterviewArchiveInterviewArchiveId(archive.getInterviewArchiveId());
@@ -194,6 +195,7 @@ public class UserController {
             result.put("createdAt", archive.getCreatedAt());
             result.put("companyName", archive.getCompany() != null ? archive.getCompany() : null);
             result.put("position", archive.getPosition());
+            result.put("archive_mode", archive.getMode().toString()); // archive_mode 추가
             
             // 평가 정보 조회 및 추가
             InterviewEval eval = interviewEvalRepository.findByInterviewArchiveInterviewArchiveId(archive.getInterviewArchiveId());
