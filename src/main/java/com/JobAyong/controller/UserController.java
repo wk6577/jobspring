@@ -28,6 +28,7 @@ public class UserController {
     private final InterviewAnswerRepository interviewAnswerRepository;
     private final InterviewService interviewService;
     private final ResumeRepository resumeRepository;
+    private final UserRepository userRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> signUp(@RequestBody UserSignUpRequest request) {
@@ -164,6 +165,72 @@ public class UserController {
         }
         userService.delete(email);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 회원탈퇴 - soft delete 방식
+     */
+    @PutMapping("/withdraw")
+    public ResponseEntity<Void> withdrawUser() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String email = authentication.getName();
+            
+            log.info("회원탈퇴 요청: {}", email);
+            userService.withdrawUser(email);
+            log.info("회원탈퇴 성공: {}", email);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            log.error("회원탈퇴 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 관리자용 - 탈퇴한 회원 복구
+     */
+    @PutMapping("/restore/{email}")
+    public ResponseEntity<Void> restoreUser(@PathVariable String email) {
+        try {
+            log.info("회원 복구 요청: {}", email);
+            userService.restoreUser(email);
+            log.info("회원 복구 성공: {}", email);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            log.error("회원 복구 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 관리자용 - 모든 사용자 목록 조회 (탈퇴한 사용자 포함)
+     */
+    @GetMapping("/admin/users")
+    public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String email = authentication.getName();
+            
+            log.info("관리자 사용자 목록 조회 요청: {}", email);
+            
+            // 관리자 권한 확인
+            User admin = userRepository.findByEmailAndNotDeleted(email)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            
+            log.info("사용자 역할 확인: {}", admin.getUserRole().getValue());
+            
+            if (!admin.getUserRole().getValue().equals("admin")) {
+                log.warn("관리자 권한 없는 사용자의 접근 시도: {} (역할: {})", email, admin.getUserRole().getValue());
+                return ResponseEntity.status(403).build();
+            }
+            
+            List<Map<String, Object>> userList = userService.getAllUsersForAdmin();
+            log.info("사용자 목록 조회 성공: {} 명의 사용자 조회", userList.size());
+            return ResponseEntity.ok(userList);
+        } catch (Exception e) {
+            log.error("사용자 목록 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
     }
     
     /**
