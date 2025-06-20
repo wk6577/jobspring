@@ -14,7 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +52,10 @@ public class UserController {
             User user = userService.findByEmail(email);
             log.info("조회된 사용자 정보 - 이름: {}, 생년월일: {}, 전화번호: {}, 성별: {}", 
                 user.getName(), user.getBirth(), user.getPhoneNumber(), user.getGender());
+
+            String savedFilename = user.getProfileImage();
+            String imageUrl = savedFilename != null ? "/images/" + savedFilename : null;
+            user.setProfileImage(imageUrl);
             
             UserInfoResponse response = new UserInfoResponse(
                 user.getEmail(),
@@ -57,7 +63,7 @@ public class UserController {
                 user.getBirth() != null ? user.getBirth().toString() : null,
                 user.getPhoneNumber(),
                 user.getGender() != null ? user.getGender().toString() : null,
-                null, // 프로필 이미지는 나중에 구현
+                user.getProfileImage(), // 사용자 프로필 URL
                 user.getJob(), // 직무 정보
                 user.getCompany() // 회사 정보
             );
@@ -71,7 +77,6 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
-
 
     /*@apiNote 사용자의 직무 회사를 수정하는 API
     * @author 나세호
@@ -91,6 +96,55 @@ public class UserController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+
+
+    // ********************************************************************************************
+    // 마이페이지 회원 정보 수정
+    // ********************************************************************************************
+    @PutMapping("/{email}")
+    public ResponseEntity<UserInfoResponse> updateUser(@PathVariable String email, @RequestBody UserProfileUpdateRequest request) {
+        try {
+            log.info("사용자 정보 수정 요청: {}", email);
+            User updatedUser = userService.updateUser(email, request);
+
+            UserInfoResponse response = new UserInfoResponse(
+                    updatedUser.getEmail(),
+                    updatedUser.getName(),
+                    updatedUser.getBirth() != null ? updatedUser.getBirth().toString() : null,
+                    updatedUser.getPhoneNumber(),
+                    updatedUser.getGender() != null ? updatedUser.getGender().toString() : null,
+                    updatedUser.getProfileImage(), // 프로필 이미지는 나중에 구현
+                    updatedUser.getJob(), // 직무 정보
+                    updatedUser.getCompany() // 회사 정보
+            );
+
+            log.info("사용자 정보 수정 완료: {}", email);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            log.error("사용자 정보 수정 실패: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+    // ********************************************************************************************
+
+
+    // ********************************************************************************************
+    // 마이페이지 프로필 이미지 수정
+    // ********************************************************************************************
+    @PostMapping("/profile-image")
+    public ResponseEntity<ProfileImageUploadResponse> uploadProfileImage(@RequestParam("email") String email,
+                                                                         @RequestParam("file") MultipartFile file)
+    {
+        log.info("사용자 정보 수정 요청: {}", email);
+        ProfileImageUploadResponse response =  userService.updateProfileImage(email, file);
+
+        log.info("사용자 프로필 정보 수정 완료: {}", email);
+        return ResponseEntity.ok(response);
+    }
+    // ********************************************************************************************
+
+
 
     @PutMapping("/{email}/password")
     public ResponseEntity<Void> changePassword(@PathVariable String email, @RequestBody PasswordChangeRequest request) {
@@ -128,7 +182,7 @@ public class UserController {
         try {
             // 면접 평가 목록 조회
             List<Map<String, Object>> evaluationList = new ArrayList<>();
-            List<InterviewArchive> interviewArchives = interviewArchiveRepository.findByUserEmail(email);
+            List<InterviewArchive> interviewArchives = interviewArchiveRepository.findByUserEmailAndDeletedAtIsNull(email);
             
             for (InterviewArchive archive : interviewArchives) {
                 Map<String, Object> evaluation = new HashMap<>();
@@ -139,6 +193,7 @@ public class UserController {
                 evaluation.put("companyName", archive.getCompany() != null ? archive.getCompany() : null);
                 evaluation.put("position", archive.getPosition());
                 evaluation.put("status", archive.getStatus());
+                evaluation.put("archive_mode", archive.getMode().toString()); // archive_mode 추가
                 
                 // 평가 점수 조회 및 추가
                 InterviewEval eval = interviewEvalRepository.findByInterviewArchiveInterviewArchiveId(archive.getInterviewArchiveId());
@@ -194,6 +249,8 @@ public class UserController {
             result.put("createdAt", archive.getCreatedAt());
             result.put("companyName", archive.getCompany() != null ? archive.getCompany() : null);
             result.put("position", archive.getPosition());
+            result.put("archive_mode", archive.getMode().toString()); // archive_mode 추가
+
             
             // 평가 정보 조회 및 추가
             InterviewEval eval = interviewEvalRepository.findByInterviewArchiveInterviewArchiveId(archive.getInterviewArchiveId());
@@ -306,7 +363,128 @@ public class UserController {
     }
     
     /**
-     * 특정 평가를 삭제합니다.
+     * 특정 평가를 휴지통으로 이동합니다 (소프트 삭제).
+     * @param id 평가 ID
+     * @return 성공 여부
+     */
+    @PutMapping("/evaluations/{id}/soft-delete")
+    public ResponseEntity<Void> softDeleteEvaluation(@PathVariable Integer id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        log.info("평가 휴지통 이동 요청 - 사용자: {}, 평가 ID: {}", email, id);
+        
+        try {
+            Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
+            if (archiveOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            InterviewArchive archive = archiveOpt.get();
+            
+            // 사용자 본인의 평가인지 확인
+            if (!archive.getUser().getEmail().equals(email)) {
+                log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                return ResponseEntity.status(403).build();
+            }
+            
+            // 소프트 삭제 (deleted_at에 현재 시간 설정)
+            archive.setDeletedAt(java.time.LocalDateTime.now());
+            interviewArchiveRepository.save(archive);
+
+            log.info("평가 휴지통 이동 완료 - 평가 ID: {}", id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("평가 휴지통 이동 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 휴지통에 있는 평가 목록을 조회합니다.
+     * @return 휴지통 평가 목록
+     */
+    @GetMapping("/trash")
+    public ResponseEntity<List<Map<String, Object>>> getTrashList() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        log.info("휴지통 목록 조회 요청 - 사용자: {}", email);
+        
+        try {
+            List<Map<String, Object>> trashList = new ArrayList<>();
+            List<InterviewArchive> deletedArchives = interviewArchiveRepository.findByUserEmailAndDeletedAtIsNotNull(email);
+            
+            for (InterviewArchive archive : deletedArchives) {
+                Map<String, Object> evaluation = new HashMap<>();
+                evaluation.put("id", archive.getInterviewArchiveId());
+                evaluation.put("title", archive.getArchive_name());
+                evaluation.put("type", "interview");
+                evaluation.put("createdAt", archive.getCreatedAt());
+                evaluation.put("deletedAt", archive.getDeletedAt());
+                evaluation.put("companyName", archive.getCompany() != null ? archive.getCompany() : null);
+                evaluation.put("position", archive.getPosition());
+                evaluation.put("status", archive.getStatus());
+                evaluation.put("archive_mode", archive.getMode().toString());
+                
+                // 평가 점수 조회 및 추가
+                InterviewEval eval = interviewEvalRepository.findByInterviewArchiveInterviewArchiveId(archive.getInterviewArchiveId());
+                if (eval != null) {
+                    evaluation.put("score", eval.getEval_score());
+                }
+                
+                trashList.add(evaluation);
+            }
+            
+            log.info("휴지통 목록 조회 완료 - 사용자: {}, 항목 수: {}", email, trashList.size());
+            return ResponseEntity.ok(trashList);
+        } catch (Exception e) {
+            log.error("휴지통 목록 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 휴지통에서 평가를 복구합니다.
+     * @param id 평가 ID
+     * @return 성공 여부
+     */
+    @PutMapping("/evaluations/{id}/restore")
+    public ResponseEntity<Void> restoreEvaluation(@PathVariable Integer id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        log.info("평가 복구 요청 - 사용자: {}, 평가 ID: {}", email, id);
+        
+        try {
+            Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
+            if (archiveOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            InterviewArchive archive = archiveOpt.get();
+            
+            // 사용자 본인의 평가인지 확인
+            if (!archive.getUser().getEmail().equals(email)) {
+                log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                return ResponseEntity.status(403).build();
+            }
+            
+            // 복구 (deleted_at을 null로 설정하고 updated_at 갱신)
+            archive.setDeletedAt(null);
+            archive.setUpdatedAt(java.time.LocalDateTime.now());
+            interviewArchiveRepository.save(archive);
+
+            log.info("평가 복구 완료 - 평가 ID: {}", id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("평가 복구 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 특정 평가를 완전히 삭제합니다 (하드 삭제).
      * @param id 평가 ID
      * @return 성공 여부
      */
@@ -315,15 +493,15 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         
-        log.info("평가 삭제 요청 - 사용자: {}, 평가 ID: {}", email, id);
+        log.info("평가 완전 삭제 요청 - 사용자: {}, 평가 ID: {}", email, id);
         
         try {
             interviewService.deleteEval(id, email);
 
-            log.info("평가 삭제 완료 - 평가 ID: {}", id);
+            log.info("평가 완전 삭제 완료 - 평가 ID: {}", id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("평가 삭제 실패: {}", e.getMessage());
+            log.error("평가 완전 삭제 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
