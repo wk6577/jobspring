@@ -27,11 +27,13 @@ import com.JobAyong.entity.User;
 public class ResumeService {
     private final ResumeEvalRepository resumeEvalRepository;
     private final ResumeRepository resumeRepository;
+    private final GPTService gptService;
     
     @Autowired
-    public ResumeService(ResumeRepository resumeRepository,ResumeEvalRepository resumeEvalRepository) {
+    public ResumeService(ResumeRepository resumeRepository, ResumeEvalRepository resumeEvalRepository, GPTService gptService) {
         this.resumeEvalRepository = resumeEvalRepository;
         this.resumeRepository = resumeRepository;
+        this.gptService = gptService;
     }
 
     public Resume save(Resume resume) {
@@ -143,6 +145,92 @@ public class ResumeService {
             throw new RuntimeException("파일 읽기 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
+
+    /**
+     * 파일에서 텍스트를 추출하고 GPT를 통해 자소서 내용만 정제하여 반환
+     * @param file 업로드된 파일 (PDF, DOCX, TXT)
+     * @return GPT로 정제된 자소서 텍스트
+     */
+    public String extractAndProcessResumeFromFile(MultipartFile file) {
+        try {
+            System.out.println("=== 자소서 추출 시작 ===");
+            System.out.println("파일명: " + file.getOriginalFilename());
+            System.out.println("파일 크기: " + file.getSize() + " bytes");
+            
+            // 1단계: 파일에서 생 텍스트 추출
+            System.out.println("1단계: 파일에서 텍스트 추출 시작");
+            String rawText = extractTextFromFile(file);
+            
+            if (rawText == null || rawText.trim().isEmpty()) {
+                throw new RuntimeException("파일에서 텍스트를 추출할 수 없습니다.");
+            }
+            
+            System.out.println("추출된 텍스트 길이: " + rawText.length() + " 문자");
+            System.out.println("추출된 텍스트 미리보기: " + rawText.substring(0, Math.min(100, rawText.length())) + "...");
+            
+            // 2단계: GPT를 통해 자소서 내용만 추출
+            System.out.println("2단계: GPT를 통한 자소서 내용 추출 시작");
+            String processedResumeText = gptService.extractResumeContentFromRawText(rawText);
+            
+            System.out.println("GPT 처리 결과 길이: " + processedResumeText.length() + " 문자");
+            System.out.println("GPT 처리 결과 미리보기: " + processedResumeText.substring(0, Math.min(100, processedResumeText.length())) + "...");
+            
+            // 3단계: 결과 검증
+            if (processedResumeText.contains("자소서 내용을 찾을 수 없습니다.")) {
+                throw new RuntimeException("업로드된 파일에서 자소서 내용을 찾을 수 없습니다.");
+            }
+            
+            System.out.println("=== 자소서 추출 완료 ===");
+            return processedResumeText;
+            
+        } catch (Exception e) {
+            System.err.println("=== 자소서 추출 실패 ===");
+            System.err.println("오류 메시지: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("자소서 처리 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 파일에서 자소서를 추출하고 Resume 엔티티로 저장
+     * @param file 업로드된 파일
+     * @param user 사용자 정보
+     * @param resumeTitle 자소서 제목
+     * @return 저장된 Resume 엔티티
+     */
+    public Resume createResumeFromFile(MultipartFile file, User user, String resumeTitle) {
+        try {
+            System.out.println("=== 자소서 파일 저장 시작 ===");
+            System.out.println("사용자: " + user.getEmail());
+            System.out.println("제목: " + resumeTitle);
+            
+            // GPT를 통해 자소서 내용 추출
+            System.out.println("자소서 내용 추출 시작...");
+            String resumeText = extractAndProcessResumeFromFile(file);
+            
+            // Resume 엔티티 생성
+            System.out.println("Resume 엔티티 생성 시작...");
+            Resume resume = new Resume();
+            resume.setUser(user);
+            resume.setResumeTitle(resumeTitle != null ? resumeTitle : "업로드된 자소서");
+            resume.setResumeText(resumeText);
+            
+            System.out.println("데이터베이스 저장 시작...");
+            // 데이터베이스에 저장
+            Resume savedResume = save(resume);
+            
+            System.out.println("저장 완료! Resume ID: " + savedResume.getResumeId());
+            System.out.println("=== 자소서 파일 저장 완료 ===");
+            
+            return savedResume;
+            
+        } catch (Exception e) {
+            System.err.println("=== 자소서 파일 저장 실패 ===");
+            System.err.println("오류 메시지: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("파일에서 자소서 생성 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
     
     // PDF에서 텍스트 추출
     private String extractTextFromPdf(InputStream inputStream) throws IOException {
@@ -157,6 +245,19 @@ public class ResumeService {
         try (XWPFDocument document = new XWPFDocument(inputStream)) {
             XWPFWordExtractor extractor = new XWPFWordExtractor(document);
             return extractor.getText();
+        }
+    }
+
+    /**
+     * OpenAI GPT API 연결 테스트
+     * @return 테스트 결과 메시지
+     */
+    public String testGPTConnection() {
+        try {
+            String testPrompt = "안녕하세요. 이것은 API 연결 테스트입니다. '연결 성공'이라고 답해주세요.";
+            return gptService.askCustomInterViewGPT(testPrompt);
+        } catch (Exception e) {
+            throw new RuntimeException("GPT API 연결 테스트 실패: " + e.getMessage());
         }
     }
 }
