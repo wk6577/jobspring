@@ -61,7 +61,8 @@ public class UserController {
                 user.getGender() != null ? user.getGender().toString() : null,
                 user.getProfileImage(), // 사용자 프로필 URL
                 user.getJob(), // 직무 정보
-                user.getCompany() // 회사 정보
+                user.getCompany(), // 회사 정보
+                user.getUserRole()
             );
             
             log.info("응답 데이터 - 생년월일: {}, 전화번호: {}, 성별: {}", 
@@ -112,7 +113,8 @@ public class UserController {
                     updatedUser.getGender() != null ? updatedUser.getGender().toString() : null,
                     updatedUser.getProfileImage(), // 프로필 이미지는 나중에 구현
                     updatedUser.getJob(), // 직무 정보
-                    updatedUser.getCompany() // 회사 정보
+                    updatedUser.getCompany(), // 회사 정보
+                    updatedUser.getUserRole()
             );
 
             log.info("사용자 정보 수정 완료: {}", email);

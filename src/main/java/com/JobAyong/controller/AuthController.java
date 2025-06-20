@@ -44,6 +44,7 @@ public class AuthController {
         response.setProfile(user.getProfileImage());
         response.setJob(user.getJob());
         response.setCompany(user.getCompany());
+        response.setRole(user.getUserRole());
         
         return ResponseEntity.ok(response);
     }

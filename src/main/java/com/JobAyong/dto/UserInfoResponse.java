@@ -1,5 +1,6 @@
 package com.JobAyong.dto;
 
+import com.JobAyong.constant.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,4 +19,5 @@ public class UserInfoResponse {
     private String profile;
     private String job;
     private String company;
+    private UserRole role;
 }
