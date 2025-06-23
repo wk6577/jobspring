@@ -145,9 +145,12 @@ public class UserController {
 
 
 
-    @PutMapping("/{email}/password")
-    public ResponseEntity<Void> changePassword(@PathVariable String email, @RequestBody PasswordChangeRequest request) {
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(@RequestBody PasswordChangeRequest request) {
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String email = authentication.getName();
+
             log.info("비밀번호 변경 요청: {}", email);
             userService.changePassword(email, request);
             log.info("비밀번호 변경 성공: {}", email);
