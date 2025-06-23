@@ -2,6 +2,7 @@ package com.JobAyong.entity;
 
 import com.JobAyong.constant.Gender;
 import com.JobAyong.constant.UserRole;
+import com.JobAyong.constant.UserStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,6 +20,9 @@ public class User {
 
     @Column(name = "role", nullable = false)
     private String role;
+
+    @Column(name = "status", nullable = false)
+    private String status = "ACTIVE";
 
     @Column(name = "password", nullable = false)
     private String password;
@@ -74,5 +78,13 @@ public class User {
 
     public void setUserRole(UserRole userRole) {
         this.role = userRole.getValue();
+    }
+
+    public UserStatus getUserStatus() {
+        return UserStatus.fromString(status);
+    }
+
+    public void setUserStatus(UserStatus userStatus) {
+        this.status = userStatus.getValue();
     }
 }
