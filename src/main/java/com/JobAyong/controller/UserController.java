@@ -770,12 +770,27 @@ public class UserController {
                 return ResponseEntity.status(403).build();
             }
 
-            resume.setResumeText(request.get("resumeText"));
+            // 제목 수정 (제공된 경우에만)
+            String title = request.get("title");
+            if (title != null) {
+                resume.setResumeTitle(title);
+            }
+            
+            // 내용 수정 (제공된 경우에만)
+            String resumeText = request.get("resumeText");
+            if (resumeText != null) {
+                resume.setResumeText(resumeText);
+            }
 
-            resumeRepository.save(resume);
+            Resume savedResume = resumeRepository.save(resume);
 
             Map<String, Object> response = new HashMap<>();
             response.put("msg", "요청하신 자기소개서 수정이 성공적으로 완료되었습니다.");
+            response.put("id", savedResume.getResumeId());
+            response.put("title", savedResume.getResumeTitle());
+            response.put("resumeText", savedResume.getResumeText());
+            response.put("createdAt", savedResume.getCreatedAt());
+            response.put("updatedAt", savedResume.getUpdatedAt());
             
             log.info("자기소개서 수정 완료 - 자기소개서 ID: {}", id);
             return ResponseEntity.ok(response);
