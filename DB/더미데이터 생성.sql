@@ -11686,10 +11686,7 @@ INSERT INTO `voice_eval` (`voice_id`, `email`, `voice_eval_comment`, `voice_eval
 (3, 'admin@example.com', '적절한 톤과 속도로 말했습니다.', 8);
 
 -- resume_eval 테이블 더미데이터
-INSERT INTO `resume_eval` (`resume_id`, `email`, `resume_eval_comment`, `resume_org`, `resume_log`) VALUES
-(1, 'admin@example.com', '이력서가 잘 구성되어 있습니다.', '원본 이력서 내용', '수정된 이력서 내용'),
-(2, 'abc@abc.com', '경력 사항이 상세합니다.', '원본 이력서 내용', '수정된 이력서 내용'),
-(3, 'admin@example.com', '포트폴리오가 인상적입니다.', '원본 이력서 내용', '수정된 이력서 내용');
+
 
 -- report 테이블 더미데이터
 INSERT INTO `report` (`email`, `target_type_id`, `target_id`, `report_reason`, `status`) VALUES

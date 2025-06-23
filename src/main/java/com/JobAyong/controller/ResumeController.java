@@ -193,6 +193,12 @@ public class ResumeController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/eval/max-version/{resumeId}")
+    public ResponseEntity<Integer> getMaxVersionByResumeId(@PathVariable Integer resumeId) {
+        Integer maxVersion = resumeService.getMaxVersionByResumeId(resumeId);
+        return ResponseEntity.ok(maxVersion);
+    }
+
     /**
      * OpenAI API 키 테스트 엔드포인트
      */
@@ -205,6 +211,37 @@ public class ResumeController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(createErrorResponse("OpenAI API 연결 테스트 실패: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 자소서 분석 API 엔드포인트
+     */
+    @PostMapping("/analyze")
+    public ResponseEntity<?> analyzeResume(@RequestBody Map<String, String> request) {
+        try {
+            String resumeText = request.get("resumeText");
+            
+            if (resumeText == null || resumeText.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(createErrorResponse("분석할 자소서 내용이 없습니다."));
+            }
+            
+            System.out.println("=== 자소서 분석 API 호출 ===");
+            System.out.println("분석할 텍스트 길이: " + resumeText.length() + " 문자");
+            
+            String analysisResult = resumeService.analyzeResume(resumeText);
+            
+            System.out.println("=== 자소서 분석 API 완료 ===");
+            return ResponseEntity.ok(createSuccessResponse("자소서 분석 완료", analysisResult));
+            
+        } catch (Exception e) {
+            System.err.println("=== 자소서 분석 API 실패 ===");
+            System.err.println("오류 메시지: " + e.getMessage());
+            e.printStackTrace();
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createErrorResponse("자소서 분석 실패: " + e.getMessage()));
         }
     }
 

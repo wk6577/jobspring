@@ -70,6 +70,11 @@ public class ResumeService {
         resumeEvalRepository.deleteById(ResumeEvalId);
     }
 
+    // 특정 resume_id의 최대 버전 조회
+    public Integer getMaxVersionByResumeId(Integer resumeId) {
+        return resumeEvalRepository.findMaxVersionByResumeId(resumeId);
+    }
+
     // ResumeRequest -> Resume 엔티티 변환 (User 객체를 파라미터로 받음)
     public Resume toResumeEntity(ResumeRequest dto, User user) {
         Resume resume = new Resume();
@@ -99,9 +104,11 @@ public class ResumeService {
         ResumeEval eval = new ResumeEval();
         eval.setResume(resume);
         eval.setUser(user);
-        eval.setResumeEvalComment(dto.getResumeEvalComment());
         eval.setResumeOrg(dto.getResumeOrg());
-        eval.setResumeLog(dto.getResumeLog());
+        eval.setResumeImp(dto.getResumeImp());
+        eval.setReason(dto.getReason());
+        eval.setMissingAreas(dto.getMissingAreas());
+        eval.setResumeFin(dto.getResumeFin());
         eval.setResumeEvalVersion(dto.getResumeEvalVersion());
         return eval;
     }
@@ -112,9 +119,11 @@ public class ResumeService {
         dto.setResumeEvalId(eval.getResumeEvalId());
         dto.setResumeId(eval.getResume().getResumeId());
         dto.setUserEmail(eval.getUser().getEmail());
-        dto.setResumeEvalComment(eval.getResumeEvalComment());
         dto.setResumeOrg(eval.getResumeOrg());
-        dto.setResumeLog(eval.getResumeLog());
+        dto.setResumeImp(eval.getResumeImp());
+        dto.setReason(eval.getReason());
+        dto.setMissingAreas(eval.getMissingAreas());
+        dto.setResumeFin(eval.getResumeFin());
         dto.setResumeEvalVersion(eval.getResumeEvalVersion());
         dto.setCreatedAt(eval.getCreatedAt());
         dto.setDeletedAt(eval.getDeletedAt());
@@ -258,6 +267,31 @@ public class ResumeService {
             return gptService.askCustomInterViewGPT(testPrompt);
         } catch (Exception e) {
             throw new RuntimeException("GPT API 연결 테스트 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 자소서 내용을 분석하고 개선안을 제공
+     * @param resumeText 분석할 자소서 원본 텍스트
+     * @return GPT 분석 결과 (JSON 문자열)
+     */
+    public String analyzeResume(String resumeText) {
+        try {
+            System.out.println("=== 자소서 분석 시작 ===");
+            System.out.println("분석할 텍스트 길이: " + resumeText.length() + " 문자");
+            
+            String analysisResult = gptService.analyzeResumeContent(resumeText);
+            
+            System.out.println("분석 결과 길이: " + analysisResult.length() + " 문자");
+            System.out.println("=== 자소서 분석 완료 ===");
+            
+            return analysisResult;
+            
+        } catch (Exception e) {
+            System.err.println("=== 자소서 분석 실패 ===");
+            System.err.println("오류 메시지: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("자소서 분석 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 }

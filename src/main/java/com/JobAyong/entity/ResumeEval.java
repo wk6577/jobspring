@@ -24,14 +24,20 @@ public class ResumeEval {
     @JoinColumn(name = "email", nullable = false)
     private User user;
 
-    @Column(name = "resume_eval_comment", nullable = false)
-    private String resumeEvalComment;
-
     @Column(name = "resume_org", nullable = false, columnDefinition = "TEXT")
     private String resumeOrg;
 
-    @Column(name = "resume_log", nullable = false, columnDefinition = "TEXT")
-    private String resumeLog;
+    @Column(name = "resume_imp", nullable = false, columnDefinition = "TEXT")
+    private String resumeImp;
+
+    @Column(name = "reason", columnDefinition = "TEXT")
+    private String reason;
+
+    @Column(name = "missing_areas", columnDefinition = "TEXT")
+    private String missingAreas;
+
+    @Column(name = "resume_fin", nullable = false, columnDefinition = "TEXT")
+    private String resumeFin;
 
     @Column(name = "resume_eval_version", nullable = false, columnDefinition = "int default 1")
     private Integer resumeEvalVersion;
@@ -46,5 +52,4 @@ public class ResumeEval {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
-
 }

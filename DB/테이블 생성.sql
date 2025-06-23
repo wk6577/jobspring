@@ -184,9 +184,11 @@ CREATE TABLE `resume_eval` (
     `resume_eval_id` INT AUTO_INCREMENT NOT NULL,
     `resume_id` INT NOT NULL,
     `email` VARCHAR(255) NOT NULL,
-    `resume_eval_comment` TEXT NULL,
     `resume_org` TEXT NOT NULL COMMENT '평가 받는 텍스트',
-    `resume_log` TEXT NOT NULL COMMENT 'ai가 수정해준 부분에서 사용자가 원하는 부분만 커밋한 텍스트 전체',
+    `resume_imp` TEXT NOT NULL COMMENT 'ai가 개선해준 자소서',
+    `reason` TEXT NULL COMMENT '개선 이유',
+    `missing_areas` TEXT NULL,
+    `resume_fin` TEXT NOT NULL COMMENT '수정 저장할 최종 자소서',
     `resume_eval_version` INT NOT NULL DEFAULT 1,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
@@ -194,7 +196,7 @@ CREATE TABLE `resume_eval` (
     FOREIGN KEY (`resume_id`) REFERENCES `resume` (`resume_id`),
     FOREIGN KEY (`email`) REFERENCES `user` (`email`)
 );
-
+-- drop table resume_eval;
 -- report 테이블
 CREATE TABLE `report` (
     `report_id` INT AUTO_INCREMENT NOT NULL,

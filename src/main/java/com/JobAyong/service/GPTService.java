@@ -63,6 +63,54 @@ public class GPTService {
     }
 
     /**
+     * 자소서 내용을 분석하고 개선안을 제공하는 메서드
+     * @param resumeText 분석할 자소서 원본 텍스트
+     * @return GPT가 분석한 결과 (JSON 형태의 문자열)
+     */
+    public String analyzeResumeContent(String resumeText) {
+        log.info("자소서 분석 시작: " + resumeText.substring(0, Math.min(100, resumeText.length())) + "...");
+        String prompt = createResumeAnalysisPrompt(resumeText);
+        String rawResponse = callGPTAPI("자소서 분석", prompt, 0.7);
+        
+        // GPT 응답에서 마크다운 코드 블록 제거
+        return cleanGPTResponse(rawResponse);
+    }
+
+    /**
+     * GPT 응답에서 마크다운 코드 블록 제거
+     * @param rawResponse GPT 원본 응답
+     * @return 정리된 JSON 문자열
+     */
+    private String cleanGPTResponse(String rawResponse) {
+        if (rawResponse == null || rawResponse.trim().isEmpty()) {
+            return rawResponse;
+        }
+        
+        String cleaned = rawResponse.trim();
+        
+        // ```json으로 시작하고 ```로 끝나는 마크다운 코드 블록 제거
+        if (cleaned.startsWith("```json") && cleaned.endsWith("```")) {
+            cleaned = cleaned.substring(7); // "```json" 제거
+            cleaned = cleaned.substring(0, cleaned.length() - 3); // "```" 제거
+            cleaned = cleaned.trim();
+        }
+        // ```로 시작하고 끝나는 일반 코드 블록도 처리
+        else if (cleaned.startsWith("```") && cleaned.endsWith("```")) {
+            // 첫 번째 줄바꿈까지 제거 (```json\n 또는 ```\n)
+            int firstNewline = cleaned.indexOf('\n');
+            if (firstNewline > 0) {
+                cleaned = cleaned.substring(firstNewline + 1);
+            } else {
+                cleaned = cleaned.substring(3); // "```" 제거
+            }
+            cleaned = cleaned.substring(0, cleaned.length() - 3); // 마지막 "```" 제거
+            cleaned = cleaned.trim();
+        }
+        
+        return cleaned;
+    }
+
+    /**
      * GPT API 호출 공통 메서드
      */
     private String callGPTAPI(String taskName, String prompt, double temperature) {
@@ -93,7 +141,7 @@ public class GPTService {
             );
 
             Map<String, Object> requestBody = Map.of(
-                    "model", "gpt-4o",
+                    "model", "gpt-4.1-nano",
                     "messages", List.of(message),
                     "temperature", temperature,
                     "max_tokens", 16384
@@ -174,6 +222,104 @@ public class GPTService {
             
             "분석할 원문:\n" +
             "%s", rawText
+        );
+    }
+
+    /**
+     * 자소서 분석을 위한 프롬프트 생성 (확장된 버전)
+     * @param resumeText 분석할 자소서 텍스트
+     * @return GPT에게 전달할 프롬프트
+     */
+    private String createResumeAnalysisPrompt(String resumeText) {
+        return String.format(
+            "당신은 전문적인 자기소개서 컨설턴트입니다. 다음 자기소개서를 분석하고 개선해주세요.\n\n" +
+            
+            "📌 분석 및 개선 기준:\n" +
+            "1. ✅ 논리성과 구조\n" +
+            "- 문단은 도입 → 전개 → 결론 구조로 자연스럽게 구성되어야 합니다.\n" +
+            "- 문장 간, 문단 간 흐름이 자연스럽고 논리적으로 연결되어야 합니다.\n" +
+            "- 불필요한 반복 문장을 제거하고, 핵심 메시지가 명확히 드러나야 합니다.\n\n" +
+
+            "2. ✅ 표현력과 어휘 사용\n" +
+            "- 문장이 자연스럽고 세련된 문어체로 구성되어야 합니다.\n" +
+            "- 직무와 관련된 적절한 어휘를 사용하며, 비속어나 축약어는 제거해 주세요.\n" +
+            "- 쉬운 문장 구조와 적절한 길이로 가독성을 높여 주세요.\n\n" +
+
+            "3. ✅ 맞춤법 및 문법\n" +
+            "- 철자, 띄어쓰기, 맞춤법 오류를 수정해 주세요.\n" +
+            "- 주어와 서술어의 호응, 어순, 시제의 일관성 등을 점검하고 수정해 주세요.\n\n" +
+
+            "4. ✅ 직무 역량 표현\n" +
+            "- 문제 상황을 인식하고 해결한 사례를 명확히 서술해 주세요.\n" +
+            "- 팀워크, 협업, 커뮤니케이션 능력이 드러나는 경험을 포함해 주세요.\n" +
+            "- 해당 직무와 연관된 기술력, 전공, 자격증, 실무 경험이 자연스럽게 드러나야 합니다.\n\n" +
+
+            "5. ✅ 성실성과 태도\n" +
+            "- 꾸준한 노력, 장기간 지속된 활동, 자기계발 노력이 드러나도록 표현해 주세요.\n" +
+            "- 외부 교육, 학습, 자격증 취득 등 성실하게 준비한 태도가 보이게 다듬어 주세요.\n" +
+            "- 맡은 일을 책임감 있게 끝까지 수행한 사례를 강조해 주세요.\n\n" +
+
+            "6. ✅ 리더십과 도전정신\n" +
+            "- 조직을 이끌거나 조율한 리더 경험이 있다면 강조해 주세요.\n" +
+            "- 실패 극복이나 새로운 시도를 한 도전 경험을 잘 드러내 주세요.\n" +
+            "- 갈등 해결 또는 구성원 간 문제 조정 사례가 있다면 포함해 주세요.\n\n" +
+
+            "7. ✅ 결과 및 성과 중심 표현\n" +
+            "- 경험의 결과를 수치나 지표(예: 퍼센트, 증가율, 수량 등)로 표현해 주세요.\n" +
+            "- 타인의 피드백을 수용하고 개선한 사례를 보여 주세요.\n" +
+            "- 활동이나 프로젝트의 결과에 대한 회고 또는 반성도 포함해 주세요.\n\n" +
+            
+            "📌 출력 형식 (반드시 JSON 형태로 응답):\n" +
+            "{\n" +
+            "  \"analysis\": {\n" +
+            "    \"original_sentences\": [\"원본 문장1\", \"원본 문장2\", ...],\n" +
+            "    \"improved_sentences\": [\"개선 문장1\", \"개선 문장2\", ...],\n" +
+            "    \"changes\": [\n" +
+            "      {\n" +
+            "        \"index\": 0,\n" +
+            "        \"type\": \"modified\",\n" +
+            "        \"original\": \"원본 문장\",\n" +
+            "        \"improved\": \"개선된 문장\",\n" +
+            "        \"reason\": \"개선 이유 설명\"\n" +
+            "      }\n" +
+            "    ],\n" +
+            "    \"missing_areas\": [\n" +
+            "      {\n" +
+            "        \"category\": \"리더십과 도전정신\",\n" +
+            "        \"description\": \"부족한 영역에 대한 설명\",\n" +
+            "        \"suggestions\": [\n" +
+            "          {\n" +
+            "            \"title\": \"제안 제목\",\n" +
+            "            \"content\": \"구체적인 제안 내용\",\n" +
+            "            \"example\": \"작성 예시 문장\",\n" +
+            "            \"insertion_point\": {\n" +
+            "              \"after_sentence\": 2,\n" +
+            "              \"reason\": \"삽입 위치 선택 이유\"\n" +
+            "            }\n" +
+            "          }\n" +
+            "        ]\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  }\n" +
+            "}\n\n" +
+            
+            "📌 주의사항:\n" +
+            "- 1단계: 기존 문장의 맞춤법, 문법, 표현력 개선 (changes 배열)\n" +
+            "- 2단계: 7가지 기준에서 부족한 영역 식별 (missing_areas 배열)\n" +
+            "- missing_areas에는 현재 자소서에서 부족하거나 없는 영역만 포함\n" +
+            "- 각 부족한 영역마다 2-3개의 구체적인 개선 제안과 예시 제공\n" +
+            "- 예시는 실제 자소서에 바로 사용할 수 있는 완성된 문장으로 작성\n" +
+            "- category는 정확히 다음 중 하나: '논리성과 구조', '표현력과 어휘 사용', '맞춤법 및 문법', '직무 역량 표현', '성실성과 태도', '리더십과 도전정신', '결과 및 성과 중심 표현'\n\n" +
+            
+            "📌 삽입 위치 분석 (insertion_point):\n" +
+            "- 각 예시 문장이 현재 자소서의 어느 위치에 삽입되면 가장 자연스러운지 분석\n" +
+            "- after_sentence는 0부터 시작하는 문장 인덱스 (0번째 문장 뒤, 1번째 문장 뒤 등)\n" +
+            "- 문맥의 흐름, 논리적 연결성, 주제의 연관성을 고려하여 최적 위치 선택\n" +
+            "- reason에는 해당 위치를 선택한 구체적인 이유 설명\n" +
+            "- 예: 프로젝트 경험 설명 후 → 리더십 역할 추가, 성장 과정 언급 후 → 구체적 성과 추가\n\n" +
+            
+            "분석할 자기소개서:\n" +
+            "%s", resumeText
         );
     }
 }
