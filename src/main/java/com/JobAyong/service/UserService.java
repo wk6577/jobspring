@@ -17,6 +17,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -30,7 +36,14 @@ public class UserService {
 
     @Transactional
     public void signUp(UserSignUpRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        // 탈퇴한 사용자인지 먼저 확인
+        Optional<User> deletedUser = userRepository.findByEmailAndDeleted(request.getEmail());
+        if (deletedUser.isPresent()) {
+            throw new RuntimeException("탈퇴한 회원입니다. 관리자에게 문의하여 계정 복구를 요청해주세요.");
+        }
+        
+        // 활성 사용자 중에 이미 존재하는 이메일인지 확인
+        if (userRepository.existsByEmailAndNotDeleted(request.getEmail())) {
             throw new RuntimeException("이미 존재하는 이메일입니다.");
         }
 
@@ -50,8 +63,16 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public LoginResponse login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
+        // 탈퇴하지 않은 사용자만 로그인 가능
+        User user = userRepository.findByEmailAndNotDeleted(email)
+                .orElseThrow(() -> {
+                    // 탈퇴한 사용자인지 확인
+                    Optional<User> deletedUser = userRepository.findByEmailAndDeleted(email);
+                    if (deletedUser.isPresent()) {
+                        return new RuntimeException("탈퇴한 회원입니다. 관리자에게 문의하여 계정 복구를 요청해주세요.");
+                    }
+                    return new RuntimeException("존재하지 않는 이메일입니다.");
+                });
 
         log.info("Login attempt - Email: {}", email);
 
@@ -73,12 +94,12 @@ public class UserService {
     }
 
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailAndNotDeleted(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
     }
 
     public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+        return userRepository.existsByEmailAndNotDeleted(email);
     }
 
     /*@apiNote 유저 회사, 직무 업데이트용 함수
@@ -105,7 +126,7 @@ public class UserService {
 
     @Transactional
     public void changePassword(String email, PasswordChangeRequest request) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndNotDeleted(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         // 현재 비밀번호 확인
@@ -137,18 +158,78 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User whoareyou(String email){ return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("접근 권한이 없습니다.")); }
+    public User whoareyou(String email){ 
+        return userRepository.findByEmailAndNotDeleted(email)
+                .orElseThrow(() -> new RuntimeException("접근 권한이 없습니다.")); 
+    }
 
     @Transactional
     public void delete(String email) {
         userRepository.deleteById(email);
     }
 
+    /**
+     * 회원탈퇴 - soft delete 방식
+     * deleted_at 필드에 현재 시간을 설정하여 탈퇴 처리
+     */
+    @Transactional
+    public void withdrawUser(String email) {
+        User user = userRepository.findByEmailAndNotDeleted(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
+        
+        log.info("회원탈퇴 완료: {}", email);
+    }
 
+    /**
+     * 관리자용 - 탈퇴한 회원 복구
+     */
+    @Transactional
+    public void restoreUser(String email) {
+        User user = userRepository.findByEmailAndDeleted(email)
+                .orElseThrow(() -> new RuntimeException("탈퇴한 사용자를 찾을 수 없습니다."));
+        
+        user.setDeletedAt(null);
+        userRepository.save(user);
+        
+        log.info("회원 복구 완료: {}", email);
+    }
+
+    /**
+     * 관리자용 - 모든 사용자 목록 조회 (탈퇴한 사용자 포함)
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAllUsersForAdmin() {
+        log.info("관리자용 전체 사용자 목록 조회 시작");
+        
+        List<User> allUsers = userRepository.findAll();
+        log.info("데이터베이스에서 {} 명의 사용자 조회됨", allUsers.size());
+        
+        List<Map<String, Object>> userList = new ArrayList<>();
+        
+        for (User user : allUsers) {
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("email", user.getEmail());
+            userInfo.put("name", user.getName());
+            userInfo.put("role", user.getUserRole().getValue());
+            userInfo.put("createdAt", user.getCreatedAt());
+            userInfo.put("deletedAt", user.getDeletedAt());
+            userInfo.put("isDeleted", user.getDeletedAt() != null);
+            userList.add(userInfo);
+        }
+        
+        long activeUsers = userList.stream().filter(u -> !(Boolean)u.get("isDeleted")).count();
+        long deletedUsers = userList.stream().filter(u -> (Boolean)u.get("isDeleted")).count();
+        log.info("사용자 목록 변환 완료: 활성 사용자 {} 명, 탈퇴 사용자 {} 명", activeUsers, deletedUsers);
+        
+        return userList;
+    }
 
     @Transactional
     public User updateUser(String email, UserProfileUpdateRequest request) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndNotDeleted(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         // 수정할 필드들 업데이트
@@ -181,7 +262,7 @@ public class UserService {
     public ProfileImageUploadResponse updateProfileImage(String email, MultipartFile file){
         try {
             // 1. 유저 조회
-            User user = userRepository.findByEmail(email)
+            User user = userRepository.findByEmailAndNotDeleted(email)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
             // 2. 파일 관련 정보
