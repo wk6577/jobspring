@@ -756,25 +756,13 @@ public class UserController {
                 log.warn("권한 없음: 사용자({})가 다른 사용자의 자기소개서({})에 접근 시도", email, id);
                 return ResponseEntity.status(403).build();
             }
-            
-            String title = request.get("title");
-            String resumeText = request.get("resumeText");
-            
-            if (title != null) {
-                resume.setResumeTitle(title);
-            }
-            if (resumeText != null) {
-                resume.setResumeText(resumeText);
-            }
-            
-            Resume updatedResume = resumeRepository.save(resume);
-            
+
+            resume.setResumeText(request.get("resumeText"));
+
+            resumeRepository.save(resume);
+
             Map<String, Object> response = new HashMap<>();
-            response.put("id", updatedResume.getResumeId());
-            response.put("title", updatedResume.getResumeTitle());
-            response.put("resumeText", updatedResume.getResumeText());
-            response.put("createdAt", updatedResume.getCreatedAt());
-            response.put("updatedAt", updatedResume.getUpdatedAt());
+            response.put("msg", "요청하신 자기소개서 수정이 성공적으로 완료되었습니다.");
             
             log.info("자기소개서 수정 완료 - 자기소개서 ID: {}", id);
             return ResponseEntity.ok(response);
