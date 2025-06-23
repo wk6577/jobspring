@@ -5,6 +5,7 @@ import com.JobAyong.entity.*;
 import com.JobAyong.repository.*;
 import com.JobAyong.service.InterviewService;
 import com.JobAyong.service.UserService;
+import com.JobAyong.constant.ResumeType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -624,7 +625,8 @@ public class UserController {
         log.info("자기소개서 목록 조회 요청 - 사용자: {}", email);
         
         try {
-            List<Resume> resumes = resumeRepository.findByUserEmail(email);
+            // 삭제되지 않은 자기소개서만 조회
+            List<Resume> resumes = resumeRepository.findActiveResumesByUserEmail(email);
             List<Map<String, Object>> resumeList = new ArrayList<>();
             
             for (Resume resume : resumes) {
@@ -658,7 +660,8 @@ public class UserController {
         log.info("자기소개서 상세 조회 요청 - 사용자: {}, 자기소개서 ID: {}", email, id);
         
         try {
-            Optional<Resume> resumeOpt = resumeRepository.findById(id);
+            // 삭제되지 않은 자기소개서만 조회
+            Optional<Resume> resumeOpt = resumeRepository.findActiveResumeById(id);
             if (resumeOpt.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
@@ -701,6 +704,7 @@ public class UserController {
         try {
             String title = request.get("title");
             String resumeText = request.get("resumeText");
+            String resumeType = request.get("resumeType");
             
             if (title == null || title.trim().isEmpty()) {
                 return ResponseEntity.badRequest().build();
@@ -712,6 +716,17 @@ public class UserController {
             resume.setUser(user);
             resume.setResumeTitle(title);
             resume.setResumeText(resumeText != null ? resumeText : "");
+            
+            // resumeType 설정 (기본값은 text)
+            if (resumeType != null) {
+                try {
+                    resume.setResumeType(ResumeType.valueOf(resumeType));
+                } catch (IllegalArgumentException e) {
+                    resume.setResumeType(ResumeType.text); // 기본값
+                }
+            } else {
+                resume.setResumeType(ResumeType.text); // 기본값
+            }
             
             Resume savedResume = resumeRepository.save(resume);
             
@@ -744,7 +759,8 @@ public class UserController {
         log.info("자기소개서 수정 요청 - 사용자: {}, 자기소개서 ID: {}", email, id);
         
         try {
-            Optional<Resume> resumeOpt = resumeRepository.findById(id);
+            // 삭제되지 않은 자기소개서만 수정 가능
+            Optional<Resume> resumeOpt = resumeRepository.findActiveResumeById(id);
             if (resumeOpt.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
@@ -756,25 +772,28 @@ public class UserController {
                 log.warn("권한 없음: 사용자({})가 다른 사용자의 자기소개서({})에 접근 시도", email, id);
                 return ResponseEntity.status(403).build();
             }
-            
+
+            // 제목 수정 (제공된 경우에만)
             String title = request.get("title");
-            String resumeText = request.get("resumeText");
-            
             if (title != null) {
                 resume.setResumeTitle(title);
             }
+            
+            // 내용 수정 (제공된 경우에만)
+            String resumeText = request.get("resumeText");
             if (resumeText != null) {
                 resume.setResumeText(resumeText);
             }
-            
-            Resume updatedResume = resumeRepository.save(resume);
-            
+
+            Resume savedResume = resumeRepository.save(resume);
+
             Map<String, Object> response = new HashMap<>();
-            response.put("id", updatedResume.getResumeId());
-            response.put("title", updatedResume.getResumeTitle());
-            response.put("resumeText", updatedResume.getResumeText());
-            response.put("createdAt", updatedResume.getCreatedAt());
-            response.put("updatedAt", updatedResume.getUpdatedAt());
+            response.put("msg", "요청하신 자기소개서 수정이 성공적으로 완료되었습니다.");
+            response.put("id", savedResume.getResumeId());
+            response.put("title", savedResume.getResumeTitle());
+            response.put("resumeText", savedResume.getResumeText());
+            response.put("createdAt", savedResume.getCreatedAt());
+            response.put("updatedAt", savedResume.getUpdatedAt());
             
             log.info("자기소개서 수정 완료 - 자기소개서 ID: {}", id);
             return ResponseEntity.ok(response);
@@ -785,19 +804,20 @@ public class UserController {
     }
 
     /**
-     * 자기소개서를 삭제합니다.
+     * 자기소개서를 휴지통으로 이동합니다 (소프트 삭제).
      * @param id 자기소개서 ID
      * @return 성공 여부
      */
-    @DeleteMapping("/resume/{id}")
-    public ResponseEntity<Void> deleteResume(@PathVariable Integer id) {
+    @PutMapping("/resume/{id}/soft-delete")
+    public ResponseEntity<Void> softDeleteResume(@PathVariable Integer id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         
-        log.info("자기소개서 삭제 요청 - 사용자: {}, 자기소개서 ID: {}", email, id);
+        log.info("자기소개서 휴지통 이동 요청 - 사용자: {}, 자기소개서 ID: {}", email, id);
         
         try {
-            Optional<Resume> resumeOpt = resumeRepository.findById(id);
+            // 삭제되지 않은 자기소개서만 휴지통으로 이동 가능
+            Optional<Resume> resumeOpt = resumeRepository.findActiveResumeById(id);
             if (resumeOpt.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
@@ -810,35 +830,177 @@ public class UserController {
                 return ResponseEntity.status(403).build();
             }
             
-            resumeRepository.delete(resume);
+            // 현재 시간으로 deleted_at 설정 (소프트 삭제)
+            resume.setDeletedAt(java.time.LocalDateTime.now());
+            resumeRepository.save(resume);
             
-            log.info("자기소개서 삭제 완료 - 자기소개서 ID: {}", id);
+            log.info("자기소개서 휴지통 이동 완료 - 자기소개서 ID: {}", id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("자기소개서 삭제 실패: {}", e.getMessage());
+            log.error("자기소개서 휴지통 이동 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
 
     /**
-     * 사용자의 모든 자기소개서를 삭제합니다.
-     * @return 성공 여부
+     * 휴지통의 자기소개서 목록을 조회합니다.
+     * @return 휴지통 자기소개서 목록
      */
-    @DeleteMapping("/resume")
-    public ResponseEntity<Void> deleteAllResumes() {
+    @GetMapping("/resume/trash")
+    public ResponseEntity<List<Map<String, Object>>> getResumeTrashList() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         
-        log.info("모든 자기소개서 삭제 요청 - 사용자: {}", email);
+        log.info("자기소개서 휴지통 목록 조회 요청 - 사용자: {}", email);
         
         try {
-            List<Resume> resumes = resumeRepository.findByUserEmail(email);
-            resumeRepository.deleteAll(resumes);
+            // 삭제된 자기소개서만 조회
+            List<Resume> deletedResumes = resumeRepository.findDeletedResumesByUserEmail(email);
+            List<Map<String, Object>> resumeList = new ArrayList<>();
             
-            log.info("모든 자기소개서 삭제 완료 - 사용자: {}, 삭제된 항목 수: {}", email, resumes.size());
+            for (Resume resume : deletedResumes) {
+                Map<String, Object> resumeData = new HashMap<>();
+                resumeData.put("id", resume.getResumeId());
+                resumeData.put("title", resume.getResumeTitle());
+                resumeData.put("resumeText", resume.getResumeText());
+                resumeData.put("createdAt", resume.getCreatedAt());
+                resumeData.put("updatedAt", resume.getUpdatedAt());
+                resumeData.put("deletedAt", resume.getDeletedAt());
+                resumeList.add(resumeData);
+            }
+            
+            log.info("자기소개서 휴지통 목록 조회 완료 - 사용자: {}, 항목 수: {}", email, resumeList.size());
+            return ResponseEntity.ok(resumeList);
+        } catch (Exception e) {
+            log.error("자기소개서 휴지통 목록 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 휴지통에서 자기소개서를 복구합니다.
+     * @param id 자기소개서 ID
+     * @return 성공 여부
+     */
+    @PutMapping("/resume/{id}/restore")
+    public ResponseEntity<Void> restoreResume(@PathVariable Integer id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        log.info("자기소개서 복구 요청 - 사용자: {}, 자기소개서 ID: {}", email, id);
+        
+        try {
+            // 삭제된 자기소개서만 복구 가능
+            Optional<Resume> resumeOpt = resumeRepository.findDeletedResumeById(id);
+            if (resumeOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            Resume resume = resumeOpt.get();
+            
+            // 사용자 본인의 자기소개서인지 확인
+            if (!resume.getUser().getEmail().equals(email)) {
+                log.warn("권한 없음: 사용자({})가 다른 사용자의 자기소개서({})에 접근 시도", email, id);
+                return ResponseEntity.status(403).build();
+            }
+            
+            // deleted_at을 null로 설정하여 복구
+            resume.setDeletedAt(null);
+            resumeRepository.save(resume);
+            
+            log.info("자기소개서 복구 완료 - 자기소개서 ID: {}", id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("모든 자기소개서 삭제 실패: {}", e.getMessage());
+            log.error("자기소개서 복구 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 자기소개서를 완전히 삭제합니다 (하드 삭제).
+     * @param id 자기소개서 ID
+     * @return 성공 여부
+     */
+    @DeleteMapping("/resume/{id}")
+    public ResponseEntity<Void> deleteResume(@PathVariable Integer id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        log.info("자기소개서 완전 삭제 요청 - 사용자: {}, 자기소개서 ID: {}", email, id);
+        
+        try {
+            // 휴지통에 있는 자기소개서만 완전 삭제 가능
+            Optional<Resume> resumeOpt = resumeRepository.findDeletedResumeById(id);
+            if (resumeOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            Resume resume = resumeOpt.get();
+            
+            // 사용자 본인의 자기소개서인지 확인
+            if (!resume.getUser().getEmail().equals(email)) {
+                log.warn("권한 없음: 사용자({})가 다른 사용자의 자기소개서({})에 접근 시도", email, id);
+                return ResponseEntity.status(403).build();
+            }
+            
+            // 데이터베이스에서 완전 삭제
+            resumeRepository.delete(resume);
+            
+            log.info("자기소개서 완전 삭제 완료 - 자기소개서 ID: {}", id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("자기소개서 완전 삭제 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 사용자의 모든 자기소개서를 휴지통으로 이동합니다.
+     * @return 성공 여부
+     */
+    @PutMapping("/resume/soft-delete-all")
+    public ResponseEntity<Void> softDeleteAllResumes() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        log.info("모든 자기소개서 휴지통 이동 요청 - 사용자: {}", email);
+        
+        try {
+            List<Resume> resumes = resumeRepository.findActiveResumesByUserEmail(email);
+            
+            // 모든 자기소개서를 휴지통으로 이동
+            for (Resume resume : resumes) {
+                resume.setDeletedAt(java.time.LocalDateTime.now());
+            }
+            resumeRepository.saveAll(resumes);
+            
+            log.info("모든 자기소개서 휴지통 이동 완료 - 사용자: {}, 이동된 항목 수: {}", email, resumes.size());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("모든 자기소개서 휴지통 이동 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 휴지통의 모든 자기소개서를 완전히 삭제합니다.
+     * @return 성공 여부
+     */
+    @DeleteMapping("/resume/trash")
+    public ResponseEntity<Void> deleteAllTrashResumes() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        log.info("휴지통의 모든 자기소개서 완전 삭제 요청 - 사용자: {}", email);
+        
+        try {
+            List<Resume> deletedResumes = resumeRepository.findDeletedResumesByUserEmail(email);
+            resumeRepository.deleteAll(deletedResumes);
+            
+            log.info("휴지통의 모든 자기소개서 완전 삭제 완료 - 사용자: {}, 삭제된 항목 수: {}", email, deletedResumes.size());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("휴지통의 모든 자기소개서 완전 삭제 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
