@@ -2,6 +2,7 @@ package com.JobAyong.service;
 
 import com.JobAyong.config.JwtTokenProvider;
 import com.JobAyong.constant.UserRole;
+import com.JobAyong.constant.UserStatus;
 import com.JobAyong.constant.Gender;
 import com.JobAyong.dto.*;
 import com.JobAyong.entity.User;
@@ -170,7 +171,7 @@ public class UserService {
 
     /**
      * 회원탈퇴 - soft delete 방식
-     * deleted_at 필드에 현재 시간을 설정하여 탈퇴 처리
+     * deleted_at 필드에 현재 시간을 설정하고 status를 DELETE_WAITING으로 변경
      */
     @Transactional
     public void withdrawUser(String email) {
@@ -178,9 +179,10 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         
         user.setDeletedAt(LocalDateTime.now());
+        user.setUserStatus(UserStatus.DELETE_WAITING);
         userRepository.save(user);
         
-        log.info("회원탈퇴 완료: {}", email);
+        log.info("회원탈퇴 완료: {} (상태: DELETE_WAITING)", email);
     }
 
     /**
@@ -192,9 +194,25 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("탈퇴한 사용자를 찾을 수 없습니다."));
         
         user.setDeletedAt(null);
+        user.setUserStatus(UserStatus.ACTIVE);
         userRepository.save(user);
         
-        log.info("회원 복구 완료: {}", email);
+        log.info("회원 복구 완료: {} (상태: ACTIVE)", email);
+    }
+
+    /**
+     * 관리자용 - 사용자 상태 변경 (활성/정지)
+     */
+    @Transactional
+    public void updateUserStatus(String email, String status) {
+        User user = userRepository.findByEmailAndNotDeleted(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
+        UserStatus userStatus = UserStatus.fromString(status);
+        user.setUserStatus(userStatus);
+        userRepository.save(user);
+        
+        log.info("사용자 상태 변경 완료: {} -> {}", email, status);
     }
 
     /**
@@ -214,6 +232,7 @@ public class UserService {
             userInfo.put("email", user.getEmail());
             userInfo.put("name", user.getName());
             userInfo.put("role", user.getUserRole().getValue());
+            userInfo.put("status", user.getStatus() != null ? user.getStatus() : "ACTIVE");
             userInfo.put("createdAt", user.getCreatedAt());
             userInfo.put("deletedAt", user.getDeletedAt());
             userInfo.put("isDeleted", user.getDeletedAt() != null);

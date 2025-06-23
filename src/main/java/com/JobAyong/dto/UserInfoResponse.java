@@ -20,4 +20,5 @@ public class UserInfoResponse {
     private String job;
     private String company;
     private UserRole role;
+    private String status;
 }

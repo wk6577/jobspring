@@ -43,6 +43,29 @@ public class UserController {
         return ResponseEntity.ok(exists);
     }
 
+    /**
+     * 현재 로그인한 사용자의 상태 확인
+     */
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> getCurrentUserStatus() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String email = authentication.getName();
+            
+            User user = userRepository.findByEmailAndNotDeleted(email)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", user.getStatus());
+            response.put("role", user.getUserRole().getValue());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("사용자 상태 조회 실패: {}", e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+
     @GetMapping("/{email}")
     public ResponseEntity<UserInfoResponse> getUserByEmail(@PathVariable String email) {
         try {
@@ -64,7 +87,8 @@ public class UserController {
                 user.getProfileImage(), // 사용자 프로필 URL
                 user.getJob(), // 직무 정보
                 user.getCompany(), // 회사 정보
-                user.getUserRole()
+                user.getUserRole(),
+                user.getStatus() != null ? user.getStatus() : "ACTIVE"
             );
             
             log.info("응답 데이터 - 생년월일: {}, 전화번호: {}, 성별: {}", 
@@ -116,7 +140,8 @@ public class UserController {
                     updatedUser.getProfileImage(), // 프로필 이미지는 나중에 구현
                     updatedUser.getJob(), // 직무 정보
                     updatedUser.getCompany(), // 회사 정보
-                    updatedUser.getUserRole()
+                    updatedUser.getUserRole(),
+                    updatedUser.getStatus() != null ? updatedUser.getStatus() : "ACTIVE"
             );
 
             log.info("사용자 정보 수정 완료: {}", email);
@@ -197,6 +222,16 @@ public class UserController {
     public ResponseEntity<Void> restoreUser(@PathVariable String email) {
         try {
             log.info("회원 복구 요청: {}", email);
+            
+            // 대상 사용자가 관리자인지 확인
+            User targetUser = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("대상 사용자를 찾을 수 없습니다."));
+            
+            if (targetUser.getUserRole().getValue().equals("admin")) {
+                log.warn("관리자 계정의 복구 시도: {}", email);
+                return ResponseEntity.status(403).build();
+            }
+            
             userService.restoreUser(email);
             log.info("회원 복구 성공: {}", email);
             return ResponseEntity.ok().build();
@@ -233,6 +268,50 @@ public class UserController {
             return ResponseEntity.ok(userList);
         } catch (Exception e) {
             log.error("사용자 목록 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    /**
+     * 관리자용 - 사용자 상태 변경 (활성/정지)
+     */
+    @PutMapping("/admin/users/{email}/status")
+    public ResponseEntity<Void> updateUserStatus(@PathVariable String email, @RequestBody Map<String, String> request) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String adminEmail = authentication.getName();
+            
+            log.info("사용자 상태 변경 요청 - 관리자: {}, 대상 사용자: {}", adminEmail, email);
+            
+            // 관리자 권한 확인
+            User admin = userRepository.findByEmailAndNotDeleted(adminEmail)
+                    .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다."));
+            
+            if (!admin.getUserRole().getValue().equals("admin")) {
+                log.warn("관리자 권한 없는 사용자의 상태 변경 시도: {} (역할: {})", adminEmail, admin.getUserRole().getValue());
+                return ResponseEntity.status(403).build();
+            }
+            
+            String newStatus = request.get("status");
+            if (newStatus == null || (!newStatus.equals("ACTIVE") && !newStatus.equals("SUSPENDED"))) {
+                log.warn("잘못된 상태 값: {}", newStatus);
+                return ResponseEntity.badRequest().build();
+            }
+            
+            // 대상 사용자가 관리자인지 확인
+            User targetUser = userRepository.findByEmailAndNotDeleted(email)
+                    .orElseThrow(() -> new RuntimeException("대상 사용자를 찾을 수 없습니다."));
+            
+            if (targetUser.getUserRole().getValue().equals("admin")) {
+                log.warn("관리자 계정의 상태 변경 시도: {}", email);
+                return ResponseEntity.status(403).build();
+            }
+            
+            userService.updateUserStatus(email, newStatus);
+            log.info("사용자 상태 변경 성공: {} -> {}", email, newStatus);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("사용자 상태 변경 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(500).build();
         }
     }
