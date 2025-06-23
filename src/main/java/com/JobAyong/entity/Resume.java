@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
+import com.JobAyong.constant.ResumeType;
 
 @Entity
 @Table(name = "resume")
@@ -24,6 +25,10 @@ public class Resume {
 
     @Column(name = "resume_text", columnDefinition = "TEXT")
     private String resumeText;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "resume_type", nullable = false)
+    private ResumeType resumeType;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

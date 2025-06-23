@@ -22,6 +22,9 @@ import com.JobAyong.dto.ResumeResponse;
 import com.JobAyong.dto.ResumeEvalRequest;
 import com.JobAyong.dto.ResumeEvalResponse;
 import com.JobAyong.entity.User;
+import com.JobAyong.constant.ResumeType;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class ResumeService {
@@ -79,9 +82,28 @@ public class ResumeService {
     public Resume toResumeEntity(ResumeRequest dto, User user) {
         Resume resume = new Resume();
         resume.setUser(user);
-        resume.setResumeTitle(dto.getResumeTitle());
+        
+        // 제목이 없거나 "제목 없음"인 경우 현재 시간으로 기본 제목 생성
+        String title = dto.getResumeTitle();
+        if (title == null || title.trim().isEmpty() || "제목 없음".equals(title)) {
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            title = "자기소개서 " + now.format(formatter);
+        }
+        resume.setResumeTitle(title);
+        
         resume.setResumeText(dto.getResumeText());
-        // String -> Enum 변환
+        
+        // resumeType 설정 (기본값은 text)
+        if (dto.getResumeType() != null) {
+            try {
+                resume.setResumeType(ResumeType.valueOf(dto.getResumeType()));
+            } catch (IllegalArgumentException e) {
+                resume.setResumeType(ResumeType.text); // 기본값
+            }
+        } else {
+            resume.setResumeType(ResumeType.text); // 기본값
+        }
 
         return resume;
     }
@@ -93,6 +115,7 @@ public class ResumeService {
         dto.setUserEmail(resume.getUser() != null ? resume.getUser().getEmail() : null);
         dto.setResumeTitle(resume.getResumeTitle());
         dto.setResumeText(resume.getResumeText());
+        dto.setResumeType(resume.getResumeType() != null ? resume.getResumeType().name() : "text");
         dto.setCreatedAt(resume.getCreatedAt());
         dto.setUpdatedAt(resume.getUpdatedAt());
         dto.setDeletedAt(resume.getDeletedAt());
@@ -221,8 +244,18 @@ public class ResumeService {
             System.out.println("Resume 엔티티 생성 시작...");
             Resume resume = new Resume();
             resume.setUser(user);
-            resume.setResumeTitle(resumeTitle != null ? resumeTitle : "업로드된 자소서");
+            
+            // 제목 설정 (파일 업로드인 경우 현재 시간 포함)
+            String title = resumeTitle;
+            if (title == null || title.trim().isEmpty()) {
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                title = "자기소개서 " + now.format(formatter);
+            }
+            resume.setResumeTitle(title);
+            
             resume.setResumeText(resumeText);
+            resume.setResumeType(ResumeType.file); // 파일 업로드이므로 file 타입으로 설정
             
             System.out.println("데이터베이스 저장 시작...");
             // 데이터베이스에 저장
