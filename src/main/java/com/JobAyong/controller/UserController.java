@@ -5,6 +5,7 @@ import com.JobAyong.entity.*;
 import com.JobAyong.repository.*;
 import com.JobAyong.service.InterviewService;
 import com.JobAyong.service.UserService;
+import com.JobAyong.constant.ResumeType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -700,6 +701,7 @@ public class UserController {
         try {
             String title = request.get("title");
             String resumeText = request.get("resumeText");
+            String resumeType = request.get("resumeType");
             
             if (title == null || title.trim().isEmpty()) {
                 return ResponseEntity.badRequest().build();
@@ -711,6 +713,17 @@ public class UserController {
             resume.setUser(user);
             resume.setResumeTitle(title);
             resume.setResumeText(resumeText != null ? resumeText : "");
+            
+            // resumeType 설정 (기본값은 text)
+            if (resumeType != null) {
+                try {
+                    resume.setResumeType(ResumeType.valueOf(resumeType));
+                } catch (IllegalArgumentException e) {
+                    resume.setResumeType(ResumeType.text); // 기본값
+                }
+            } else {
+                resume.setResumeType(ResumeType.text); // 기본값
+            }
             
             Resume savedResume = resumeRepository.save(resume);
             
