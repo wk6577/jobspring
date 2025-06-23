@@ -4,6 +4,8 @@ import com.JobAyong.entity.Company;
 import com.JobAyong.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +23,25 @@ public class CompanyController {
     * @author 나세호
     * */
     @GetMapping
-    public ResponseEntity<List<Company>> getCompanyList(){
-        return ResponseEntity.ok(companyService.findAllOrderByMainBusinessExists());
+    public ResponseEntity<?> getCompanyList(@RequestParam(defaultValue = "0") int pn,
+                                            @RequestParam(defaultValue = "10") int ps) {
+
+        // ****************************************************************************************
+        // 전체 리스트 반환
+        // ****************************************************************************************
+        if (pn < 0 || ps < 0) {
+            // 전체 리스트 반환
+            List<Company> allCompanies = companyService.findAllOrderByMainBusinessExists(); // 전체 리스트
+            return ResponseEntity.ok(allCompanies);
+        }
+        // ****************************************************************************************
+
+
+        // ****************************************************************************************
+        // 페이지 네이션용 => 제한된 값 만큼 리스트 반환
+        // ****************************************************************************************
+        Pageable pageable = PageRequest.of(pn, ps); // pn페이지에 ps개
+        return ResponseEntity.ok(companyService.findAllByPage(pageable));
+        // ****************************************************************************************
     }
 }

@@ -4,6 +4,8 @@ import com.JobAyong.entity.Company;
 import com.JobAyong.repository.CompanyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,4 +27,11 @@ public class CompanyService {
     * */
     @Transactional(readOnly = true)
     public List<Company> findAllOrderByMainBusinessExists(){ return companyRepository.findAllOrderByMainBusinessExists(); }
+
+
+    /*@apiNote (페이지네이션용) DB에 등록된 모든 회사정보에서 주요사업이 있는 회사부터 우선적으로 차출해 List 형식으로 가져오는 함수
+     * @author 최선아
+     * */
+    @Transactional(readOnly = true)
+    public Page<Company> findAllByPage(Pageable pageable){ return companyRepository.findAllByPage(pageable); }
 }
