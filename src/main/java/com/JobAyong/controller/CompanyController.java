@@ -44,4 +44,18 @@ public class CompanyController {
         return ResponseEntity.ok(companyService.findAllByPage(pageable));
         // ****************************************************************************************
     }
+
+
+    /*@apiNote 회사 비활성화/재활성화
+     * @author 최선아
+     * */
+    @PatchMapping("/status/{id}")
+    public ResponseEntity<Void> deleteCompany(@PathVariable("id") int companyId, @RequestParam("deactivate") boolean deactivate) {
+        if (!companyService.findByCompanyId(companyId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Boolean res = companyService.status(companyId, deactivate);
+        return ResponseEntity.ok().build();
+    }
 }

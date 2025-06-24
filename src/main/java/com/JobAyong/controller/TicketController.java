@@ -60,4 +60,34 @@ public class TicketController {
         List<Ticket> list = ticketRepository.findByEmailOrderByCreatedAtDesc(email);
         return ResponseEntity.ok(list);
     }
+
+    // ✅ 추가: 전체 조회
+    @GetMapping("/all")
+    public ResponseEntity<List<Ticket>> getAllTickets() {
+        List<Ticket> tickets = ticketRepository.findAll();
+        return ResponseEntity.ok(tickets);
+    }
+
+    // ✅ 추가: 답변 등록
+    @PatchMapping("/{id}/answer")
+    public ResponseEntity<?> answerInquiry(@PathVariable Long id, @RequestBody AnswerRequest request) {
+        try {
+            Ticket ticket = ticketRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("문의가 존재하지 않음"));
+            ticket.setAnswer(request.getAnswer());
+            ticket.setStatus("done");
+            ticketRepository.save(ticket);
+            return ResponseEntity.ok("답변 완료");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("답변 실패: " + e.getMessage());
+        }
+    }
+
+    // 내부 DTO 클래스
+    static class AnswerRequest {
+        private String answer;
+        public String getAnswer() { return answer; }
+        public void setAnswer(String answer) { this.answer = answer; }
+    }
 }

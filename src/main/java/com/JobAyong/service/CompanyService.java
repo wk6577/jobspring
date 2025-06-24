@@ -9,7 +9,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -34,4 +36,34 @@ public class CompanyService {
      * */
     @Transactional(readOnly = true)
     public Page<Company> findAllByPage(Pageable pageable){ return companyRepository.findAllByPage(pageable); }
+
+
+    /*@apiNote 회사 ID 존재 여부 true/false 반환
+     * @author 최선아
+     * */
+    public Boolean findByCompanyId(int companyId){
+        Optional<Company> companyOpt = companyRepository.findByCompanyId(companyId);
+        if (companyOpt.isPresent()) {
+            return true;
+        }
+        return false;
+    }
+
+    /*@apiNote 회사 비활성화/재활성화 처리
+     * @author 최선아
+     * */
+    @Transactional
+    public Boolean status(int companyId, boolean deactivate){
+        Optional<Company> companyOpt = companyRepository.findByCompanyId(companyId);
+        if (companyOpt.isPresent()) {
+            Company company = companyOpt.get();
+            System.out.println("삭제 시각: " + LocalDateTime.now());
+            company.setDeletedAt(deactivate ? LocalDateTime.now() : null); // ✅ 분기 처리
+            System.out.println("엔티티에 설정된 값: " + company.getDeletedAt());
+            companyRepository.save(company);
+            return true;
+        }
+        return false;
+    }
+
 }
