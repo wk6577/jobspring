@@ -332,6 +332,9 @@ public class UserController {
             List<Map<String, Object>> evaluationList = new ArrayList<>();
             List<InterviewArchive> interviewArchives = interviewArchiveRepository.findByUserEmailAndDeletedAtIsNull(email);
             
+            // 최신순으로 정렬 (createdAt 기준 내림차순)
+            interviewArchives.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+            
             for (InterviewArchive archive : interviewArchives) {
                 Map<String, Object> evaluation = new HashMap<>();
                 evaluation.put("id", archive.getInterviewArchiveId());
@@ -563,6 +566,15 @@ public class UserController {
             List<Map<String, Object>> trashList = new ArrayList<>();
             List<InterviewArchive> deletedArchives = interviewArchiveRepository.findByUserEmailAndDeletedAtIsNotNull(email);
             
+            // 최신순으로 정렬 (deletedAt 기준 내림차순, deletedAt이 null이면 createdAt 기준)
+            deletedArchives.sort((a, b) -> {
+                if (a.getDeletedAt() != null && b.getDeletedAt() != null) {
+                    return b.getDeletedAt().compareTo(a.getDeletedAt());
+                } else {
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                }
+            });
+            
             for (InterviewArchive archive : deletedArchives) {
                 Map<String, Object> evaluation = new HashMap<>();
                 evaluation.put("id", archive.getInterviewArchiveId());
@@ -706,6 +718,20 @@ public class UserController {
         try {
             // 삭제되지 않은 자기소개서만 조회
             List<Resume> resumes = resumeRepository.findActiveResumesByUserEmail(email);
+            
+            // 최신순으로 정렬 (updatedAt 기준 내림차순, updatedAt이 null이면 createdAt 기준)
+            resumes.sort((a, b) -> {
+                if (a.getUpdatedAt() != null && b.getUpdatedAt() != null) {
+                    return b.getUpdatedAt().compareTo(a.getUpdatedAt());
+                } else if (a.getUpdatedAt() == null && b.getUpdatedAt() == null) {
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                } else if (a.getUpdatedAt() == null) {
+                    return b.getUpdatedAt().compareTo(a.getCreatedAt());
+                } else {
+                    return b.getCreatedAt().compareTo(a.getUpdatedAt());
+                }
+            });
+            
             List<Map<String, Object>> resumeList = new ArrayList<>();
             
             for (Resume resume : resumes) {
@@ -935,6 +961,16 @@ public class UserController {
         try {
             // 삭제된 자기소개서만 조회
             List<Resume> deletedResumes = resumeRepository.findDeletedResumesByUserEmail(email);
+            
+            // 최신순으로 정렬 (deletedAt 기준 내림차순, deletedAt이 null이면 createdAt 기준)
+            deletedResumes.sort((a, b) -> {
+                if (a.getDeletedAt() != null && b.getDeletedAt() != null) {
+                    return b.getDeletedAt().compareTo(a.getDeletedAt());
+                } else {
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                }
+            });
+            
             List<Map<String, Object>> resumeList = new ArrayList<>();
             
             for (Resume resume : deletedResumes) {
