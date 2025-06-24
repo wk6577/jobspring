@@ -8,12 +8,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CompanyRepository extends JpaRepository<Company, Long> {
     List<Company> findByNameContaining(String name);
     List<Company> findByIndustry(String industry);
     List<Company> findBySize(CompanySize size);
+    Optional<Company> findByCompanyId(int companyId);
 
     /*@apiNote DB에서 주요사업을 갖고 있는 회사 부터 오름차순 차출 함수
     * @author 나세호
