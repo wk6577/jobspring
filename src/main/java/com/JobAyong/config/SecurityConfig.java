@@ -43,12 +43,14 @@ public class SecurityConfig {
                                 "/api/user/check-email",
                                 "/customInterviewController/**",
                                 "/api/inquiries",
-                                "/api/inquiries/**"
+                                "/api/inquiries/**",
+                                "/api/interview-archives"
                         ).permitAll()
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/user/**").authenticated()
                         .requestMatchers("/api/interview/**").authenticated()
+                        .requestMatchers("/api/interview-archives").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -60,5 +62,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
