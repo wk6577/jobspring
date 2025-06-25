@@ -29,6 +29,7 @@ public class UserController {
     private final InterviewAnswerRepository interviewAnswerRepository;
     private final InterviewService interviewService;
     private final ResumeRepository resumeRepository;
+    private final ResumeEvalRepository resumeEvalRepository;
     private final UserRepository userRepository;
 
     @PostMapping("/signup")
@@ -374,7 +375,33 @@ public class UserController {
                 evaluationList.add(evaluation);
             }
             
-            // TODO: 자소서 평가, 음성 평가 추가 (필요시)
+            // 자소서 평가 목록 조회
+            List<ResumeEval> resumeEvals = resumeEvalRepository.findByUserEmailAndDeletedAtIsNull(email);
+            
+            for (ResumeEval resumeEval : resumeEvals) {
+                Map<String, Object> evaluation = new HashMap<>();
+                evaluation.put("id", resumeEval.getResumeEvalId());
+                evaluation.put("title", resumeEval.getResume().getResumeTitle());
+                evaluation.put("type", "resume");
+                evaluation.put("createdAt", resumeEval.getCreatedAt());
+                evaluation.put("companyName", null); // Resume 엔티티에 회사명 필드가 없음
+                evaluation.put("position", null); // Resume 엔티티에 포지션 필드가 없음
+                evaluation.put("status", "DONE"); // 자소서 평가는 완료된 상태로 저장됨
+                evaluation.put("score", null); // ResumeEval 엔티티에 점수 필드가 없음
+                evaluation.put("version", resumeEval.getResumeEvalVersion()); // 자소서 평가 버전 추가
+                
+                evaluationList.add(evaluation);
+            }
+            
+            // 전체 목록을 생성일 기준으로 내림차순 정렬
+            evaluationList.sort((a, b) -> {
+                Object aCreatedAt = a.get("createdAt");
+                Object bCreatedAt = b.get("createdAt");
+                if (aCreatedAt instanceof java.time.LocalDateTime && bCreatedAt instanceof java.time.LocalDateTime) {
+                    return ((java.time.LocalDateTime) bCreatedAt).compareTo((java.time.LocalDateTime) aCreatedAt);
+                }
+                return 0;
+            });
             
             log.info("사용자 평가 목록 조회 완료: {}", email);
             return ResponseEntity.ok(evaluationList);
@@ -397,19 +424,46 @@ public class UserController {
         log.info("평가 상세 정보 조회 요청 - 사용자: {}, 평가 ID: {}", email, id);
         
         try {
-            // 인터뷰 아카이브 조회
+            // 먼저 인터뷰 아카이브에서 조회
             Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
-            if (archiveOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
+            if (archiveOpt.isPresent()) {
+                InterviewArchive archive = archiveOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!archive.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                return getInterviewEvaluationDetail(archive);
             }
             
-            InterviewArchive archive = archiveOpt.get();
-            
-            // 사용자 본인의 평가인지 확인
-            if (!archive.getUser().getEmail().equals(email)) {
-                log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
-                return ResponseEntity.status(403).build();
+            // 인터뷰 아카이브에 없으면 자소서 평가에서 조회
+            Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+            if (resumeEvalOpt.isPresent()) {
+                ResumeEval resumeEval = resumeEvalOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!resumeEval.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                return getResumeEvaluationDetail(resumeEval);
             }
+            
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            log.error("평가 상세 정보 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * 면접 평가 상세 정보를 구성합니다.
+     */
+    private ResponseEntity<Map<String, Object>> getInterviewEvaluationDetail(InterviewArchive archive) {
+        try {
             
             // 결과 데이터 구성
             Map<String, Object> result = new HashMap<>();
@@ -524,10 +578,41 @@ public class UserController {
             }
             result.put("qaList", qaList);
             
-            log.info("평가 상세 정보 조회 완료 - 평가 ID: {}", id);
+            log.info("면접 평가 상세 정보 조회 완료 - 평가 ID: {}", archive.getInterviewArchiveId());
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            log.error("평가 상세 정보 조회 실패: {}", e.getMessage());
+            log.error("면접 평가 상세 정보 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * 자소서 평가 상세 정보를 구성합니다.
+     */
+    private ResponseEntity<Map<String, Object>> getResumeEvaluationDetail(ResumeEval resumeEval) {
+        try {
+            // 결과 데이터 구성
+            Map<String, Object> result = new HashMap<>();
+            result.put("id", resumeEval.getResumeEvalId());
+            result.put("title", resumeEval.getResume().getResumeTitle());
+            result.put("type", "resume");
+            result.put("createdAt", resumeEval.getCreatedAt());
+            result.put("companyName", null); // Resume 엔티티에 회사명 필드가 없음
+            result.put("position", null); // Resume 엔티티에 포지션 필드가 없음
+            result.put("score", null); // ResumeEval 엔티티에 점수 필드가 없음
+            
+            // 자소서 평가 정보
+            result.put("originalResume", resumeEval.getResumeOrg());
+            result.put("improvedResume", resumeEval.getResumeImp());
+            result.put("finalResume", resumeEval.getResumeFin());
+            result.put("reason", resumeEval.getReason());
+            result.put("missingAreas", resumeEval.getMissingAreas());
+            result.put("version", resumeEval.getResumeEvalVersion());
+            
+            log.info("자소서 평가 상세 정보 조회 완료 - 평가 ID: {}", resumeEval.getResumeEvalId());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("자소서 평가 상세 정보 조회 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
@@ -545,25 +630,45 @@ public class UserController {
         log.info("평가 휴지통 이동 요청 - 사용자: {}, 평가 ID: {}", email, id);
         
         try {
+            // 먼저 면접 평가에서 조회
             Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
-            if (archiveOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            InterviewArchive archive = archiveOpt.get();
-            
-            // 사용자 본인의 평가인지 확인
-            if (!archive.getUser().getEmail().equals(email)) {
-                log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
-                return ResponseEntity.status(403).build();
-            }
-            
-            // 소프트 삭제 (deleted_at에 현재 시간 설정)
-            archive.setDeletedAt(java.time.LocalDateTime.now());
-            interviewArchiveRepository.save(archive);
+            if (archiveOpt.isPresent()) {
+                InterviewArchive archive = archiveOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!archive.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                // 소프트 삭제 (deleted_at에 현재 시간 설정)
+                archive.setDeletedAt(java.time.LocalDateTime.now());
+                interviewArchiveRepository.save(archive);
 
-            log.info("평가 휴지통 이동 완료 - 평가 ID: {}", id);
-            return ResponseEntity.ok().build();
+                log.info("면접 평가 휴지통 이동 완료 - 평가 ID: {}", id);
+                return ResponseEntity.ok().build();
+            }
+            
+            // 면접 평가가 없으면 자소서 평가에서 조회
+            Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+            if (resumeEvalOpt.isPresent()) {
+                ResumeEval resumeEval = resumeEvalOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!resumeEval.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                // 소프트 삭제 (deleted_at에 현재 시간 설정)
+                resumeEval.setDeletedAt(java.time.LocalDateTime.now());
+                resumeEvalRepository.save(resumeEval);
+
+                log.info("자소서 평가 휴지통 이동 완료 - 평가 ID: {}", id);
+                return ResponseEntity.ok().build();
+            }
+            
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             log.error("평가 휴지통 이동 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
@@ -615,6 +720,35 @@ public class UserController {
                 trashList.add(evaluation);
             }
             
+            // 삭제된 자소서 평가 목록 조회
+            List<ResumeEval> deletedResumeEvals = resumeEvalRepository.findByUserEmailAndDeletedAtIsNotNull(email);
+            
+            for (ResumeEval resumeEval : deletedResumeEvals) {
+                Map<String, Object> evaluation = new HashMap<>();
+                evaluation.put("id", resumeEval.getResumeEvalId());
+                evaluation.put("title", resumeEval.getResume().getResumeTitle());
+                evaluation.put("type", "resume");
+                evaluation.put("createdAt", resumeEval.getCreatedAt());
+                evaluation.put("deletedAt", resumeEval.getDeletedAt());
+                evaluation.put("companyName", null); // Resume 엔티티에 회사명 필드가 없음
+                evaluation.put("position", null); // Resume 엔티티에 포지션 필드가 없음
+                evaluation.put("status", "DONE");
+                evaluation.put("score", null); // ResumeEval 엔티티에 점수 필드가 없음
+                evaluation.put("version", resumeEval.getResumeEvalVersion()); // 자소서 평가 버전 추가
+                
+                trashList.add(evaluation);
+            }
+            
+            // 전체 목록을 삭제일 기준으로 내림차순 정렬
+            trashList.sort((a, b) -> {
+                Object aDeletedAt = a.get("deletedAt");
+                Object bDeletedAt = b.get("deletedAt");
+                if (aDeletedAt instanceof java.time.LocalDateTime && bDeletedAt instanceof java.time.LocalDateTime) {
+                    return ((java.time.LocalDateTime) bDeletedAt).compareTo((java.time.LocalDateTime) aDeletedAt);
+                }
+                return 0;
+            });
+            
             log.info("휴지통 목록 조회 완료 - 사용자: {}, 항목 수: {}", email, trashList.size());
             return ResponseEntity.ok(trashList);
         } catch (Exception e) {
@@ -636,26 +770,46 @@ public class UserController {
         log.info("평가 복구 요청 - 사용자: {}, 평가 ID: {}", email, id);
         
         try {
+            // 먼저 면접 평가에서 조회
             Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
-            if (archiveOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            InterviewArchive archive = archiveOpt.get();
-            
-            // 사용자 본인의 평가인지 확인
-            if (!archive.getUser().getEmail().equals(email)) {
-                log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
-                return ResponseEntity.status(403).build();
-            }
-            
-            // 복구 (deleted_at을 null로 설정하고 updated_at 갱신)
-            archive.setDeletedAt(null);
-            archive.setUpdatedAt(java.time.LocalDateTime.now());
-            interviewArchiveRepository.save(archive);
+            if (archiveOpt.isPresent()) {
+                InterviewArchive archive = archiveOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!archive.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                // 복구 (deleted_at을 null로 설정하고 updated_at 갱신)
+                archive.setDeletedAt(null);
+                archive.setUpdatedAt(java.time.LocalDateTime.now());
+                interviewArchiveRepository.save(archive);
 
-            log.info("평가 복구 완료 - 평가 ID: {}", id);
-            return ResponseEntity.ok().build();
+                log.info("면접 평가 복구 완료 - 평가 ID: {}", id);
+                return ResponseEntity.ok().build();
+            }
+            
+            // 면접 평가가 없으면 자소서 평가에서 조회
+            Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+            if (resumeEvalOpt.isPresent()) {
+                ResumeEval resumeEval = resumeEvalOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!resumeEval.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                // 복구 (deleted_at을 null로 설정)
+                resumeEval.setDeletedAt(null);
+                resumeEvalRepository.save(resumeEval);
+
+                log.info("자소서 평가 복구 완료 - 평가 ID: {}", id);
+                return ResponseEntity.ok().build();
+            }
+            
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             log.error("평가 복구 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
@@ -1135,6 +1289,83 @@ public class UserController {
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("휴지통의 모든 자기소개서 완전 삭제 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 자소서 평가의 타이틀을 수정합니다.
+     * @param id 자소서 평가 ID
+     * @param request 수정할 타이틀 정보
+     * @return 성공 여부
+     */
+    @PutMapping("/evaluations/{id}/title")
+    public ResponseEntity<Map<String, Object>> updateEvaluationTitle(@PathVariable Integer id, @RequestBody Map<String, String> request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        String newTitle = request.get("title");
+        if (newTitle == null || newTitle.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        log.info("평가 타이틀 수정 요청 - 사용자: {}, 평가 ID: {}, 새 타이틀: {}", email, id, newTitle);
+        
+        try {
+            // 먼저 면접 평가에서 조회
+            Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
+            if (archiveOpt.isPresent()) {
+                InterviewArchive archive = archiveOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!archive.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                // 면접 평가 타이틀 수정
+                archive.setArchive_name(newTitle.trim());
+                archive.setUpdatedAt(java.time.LocalDateTime.now());
+                interviewArchiveRepository.save(archive);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "면접 평가 타이틀이 수정되었습니다.");
+                response.put("newTitle", newTitle.trim());
+                
+                log.info("면접 평가 타이틀 수정 완료 - 평가 ID: {}", id);
+                return ResponseEntity.ok(response);
+            }
+            
+            // 면접 평가가 없으면 자소서 평가에서 조회
+            Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+            if (resumeEvalOpt.isPresent()) {
+                ResumeEval resumeEval = resumeEvalOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!resumeEval.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                // 자소서 평가의 경우 Resume 테이블의 resume_title 수정
+                Resume resume = resumeEval.getResume();
+                resume.setResumeTitle(newTitle.trim());
+                resume.setUpdatedAt(java.time.LocalDateTime.now());
+                resumeRepository.save(resume);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "자소서 평가 타이틀이 수정되었습니다.");
+                response.put("newTitle", newTitle.trim());
+                
+                log.info("자소서 평가 타이틀 수정 완료 - 평가 ID: {}", id);
+                return ResponseEntity.ok(response);
+            }
+            
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            log.error("평가 타이틀 수정 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
