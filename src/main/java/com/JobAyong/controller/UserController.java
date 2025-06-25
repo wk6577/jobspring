@@ -38,9 +38,28 @@ public class UserController {
     }
 
     @GetMapping("/check-email")
-    public ResponseEntity<Boolean> checkEmailExists(@RequestParam String email) {
-        boolean exists = userService.existsByEmail(email);
-        return ResponseEntity.ok(exists);
+    public ResponseEntity<Map<String, Object>> checkEmailExists(@RequestParam String email) {
+        Map<String, Object> response = new HashMap<>();
+        
+        // 활성 사용자 중에 존재하는지 확인
+        boolean activeExists = userService.existsByEmail(email);
+        
+        // 탈퇴한 사용자인지 확인
+        Optional<User> deletedUser = userRepository.findByEmailAndDeleted(email);
+        boolean deletedExists = deletedUser.isPresent();
+        
+        response.put("exists", activeExists);
+        response.put("isDeleted", deletedExists);
+        
+        if (deletedExists) {
+            response.put("message", "탈퇴한 회원입니다. 관리자에게 문의하여 계정 복구를 요청해주세요.");
+        } else if (activeExists) {
+            response.put("message", "이미 사용 중인 이메일입니다.");
+        } else {
+            response.put("message", "사용 가능한 이메일입니다.");
+        }
+        
+        return ResponseEntity.ok(response);
     }
 
     /**
