@@ -2,6 +2,7 @@ package com.JobAyong.controller;
 
 import com.JobAyong.entity.Ticket;
 import com.JobAyong.repository.TicketRepository;
+import com.JobAyong.dto.TicketResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/inquiries")
@@ -61,14 +63,22 @@ public class TicketController {
         return ResponseEntity.ok(list);
     }
 
-    // ✅ 추가: 전체 조회
+    // 전체 조회
     @GetMapping("/all")
-    public ResponseEntity<List<Ticket>> getAllTickets() {
+    public List<TicketResponse> getAllTickets() {
         List<Ticket> tickets = ticketRepository.findAll();
-        return ResponseEntity.ok(tickets);
+
+        return tickets.stream()
+                .sorted((a, b) -> {
+                    if ("done".equals(a.getStatus()) && !"done".equals(b.getStatus())) return 1;
+                    if (!"done".equals(a.getStatus()) && "done".equals(b.getStatus())) return -1;
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                })
+                .map(TicketResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
-    // ✅ 추가: 답변 등록
+    // 추가: 답변 등록
     @PatchMapping("/{id}/answer")
     public ResponseEntity<?> answerInquiry(@PathVariable Long id, @RequestBody AnswerRequest request) {
         try {
