@@ -50,7 +50,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/user/**").authenticated()
                         .requestMatchers("/api/interview/**").authenticated()
-                        .requestMatchers("/api/interview-archives").permitAll()
+                        .requestMatchers("/api/interview-archives", "/api/interview-archives/**").permitAll()
+//                        .requestMatchers("/api/interview-archives").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
