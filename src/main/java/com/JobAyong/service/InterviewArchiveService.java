@@ -21,4 +21,8 @@ public class InterviewArchiveService {
                 .map(InterviewArchiveResponse::fromEntity)
                 .collect(Collectors.toList());
     }
+
+    public void deleteById(int id) {
+        interviewArchiveRepository.deleteById(id);
+    }
 }
