@@ -375,8 +375,8 @@ public class UserController {
                 evaluationList.add(evaluation);
             }
             
-            // 자소서 평가 목록 조회
-            List<ResumeEval> resumeEvals = resumeEvalRepository.findByUserEmailAndDeletedAtIsNull(email);
+            // 자소서 평가 목록 조회 (각 자소서별 최신 버전만)
+            List<ResumeEval> resumeEvals = resumeEvalRepository.findLatestVersionByUserEmailAndDeletedAtIsNull(email);
             
             for (ResumeEval resumeEval : resumeEvals) {
                 Map<String, Object> evaluation = new HashMap<>();
@@ -414,16 +414,49 @@ public class UserController {
     /**
      * 특정 평가의 상세 정보를 조회합니다.
      * @param id 평가 ID
+     * @param type 평가 타입 (선택적 파라미터)
      * @return 평가 상세 정보
      */
     @GetMapping("/evaluations/{id}")
-    public ResponseEntity<Map<String, Object>> getEvaluationDetail(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, Object>> getEvaluationDetail(@PathVariable Integer id, @RequestParam(required = false) String type) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         
-        log.info("평가 상세 정보 조회 요청 - 사용자: {}, 평가 ID: {}", email, id);
+        log.info("평가 상세 정보 조회 요청 - 사용자: {}, 평가 ID: {}, 타입: {}", email, id, type);
         
         try {
+            // 타입이 명시적으로 지정된 경우 해당 타입에서만 조회
+            if ("resume".equals(type)) {
+                Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+                if (resumeEvalOpt.isPresent()) {
+                    ResumeEval resumeEval = resumeEvalOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!resumeEval.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    return getResumeEvaluationDetail(resumeEval);
+                }
+                return ResponseEntity.notFound().build();
+            } else if ("interview".equals(type)) {
+                Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
+                if (archiveOpt.isPresent()) {
+                    InterviewArchive archive = archiveOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!archive.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    return getInterviewEvaluationDetail(archive);
+                }
+                return ResponseEntity.notFound().build();
+            }
+            
+            // 타입이 지정되지 않은 경우 기존 로직 (하위 호환성)
             // 먼저 인터뷰 아카이브에서 조회
             Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
             if (archiveOpt.isPresent()) {
@@ -620,16 +653,60 @@ public class UserController {
     /**
      * 특정 평가를 휴지통으로 이동합니다 (소프트 삭제).
      * @param id 평가 ID
+     * @param type 평가 타입 (선택적 파라미터)
      * @return 성공 여부
      */
     @PutMapping("/evaluations/{id}/soft-delete")
-    public ResponseEntity<Void> softDeleteEvaluation(@PathVariable Integer id) {
+    public ResponseEntity<Void> softDeleteEvaluation(@PathVariable Integer id, @RequestParam(required = false) String type) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         
-        log.info("평가 휴지통 이동 요청 - 사용자: {}, 평가 ID: {}", email, id);
+        log.info("평가 휴지통 이동 요청 - 사용자: {}, 평가 ID: {}, 타입: {}", email, id, type);
         
         try {
+            // 타입이 명시적으로 지정된 경우 해당 타입에서만 조회
+            if ("resume".equals(type)) {
+                Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+                if (resumeEvalOpt.isPresent()) {
+                    ResumeEval resumeEval = resumeEvalOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!resumeEval.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    // 같은 resume_id의 모든 버전을 소프트 삭제
+                    Integer resumeId = resumeEval.getResume().getResumeId();
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                    resumeEvalRepository.softDeleteAllVersionsByResumeId(resumeId, now);
+
+                    log.info("자소서 평가 모든 버전 휴지통 이동 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    return ResponseEntity.ok().build();
+                }
+                return ResponseEntity.notFound().build();
+            } else if ("interview".equals(type)) {
+                Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
+                if (archiveOpt.isPresent()) {
+                    InterviewArchive archive = archiveOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!archive.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    // 소프트 삭제 (deleted_at에 현재 시간 설정)
+                    archive.setDeletedAt(java.time.LocalDateTime.now());
+                    interviewArchiveRepository.save(archive);
+
+                    log.info("면접 평가 휴지통 이동 완료 - 평가 ID: {}", id);
+                    return ResponseEntity.ok().build();
+                }
+                return ResponseEntity.notFound().build();
+            }
+            
+            // 타입이 지정되지 않은 경우 기존 로직 (하위 호환성)
             // 먼저 면접 평가에서 조회
             Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
             if (archiveOpt.isPresent()) {
@@ -660,11 +737,12 @@ public class UserController {
                     return ResponseEntity.status(403).build();
                 }
                 
-                // 소프트 삭제 (deleted_at에 현재 시간 설정)
-                resumeEval.setDeletedAt(java.time.LocalDateTime.now());
-                resumeEvalRepository.save(resumeEval);
+                // 같은 resume_id의 모든 버전을 소프트 삭제
+                Integer resumeId = resumeEval.getResume().getResumeId();
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                resumeEvalRepository.softDeleteAllVersionsByResumeId(resumeId, now);
 
-                log.info("자소서 평가 휴지통 이동 완료 - 평가 ID: {}", id);
+                log.info("자소서 평가 모든 버전 휴지통 이동 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
                 return ResponseEntity.ok().build();
             }
             
@@ -720,8 +798,8 @@ public class UserController {
                 trashList.add(evaluation);
             }
             
-            // 삭제된 자소서 평가 목록 조회
-            List<ResumeEval> deletedResumeEvals = resumeEvalRepository.findByUserEmailAndDeletedAtIsNotNull(email);
+            // 삭제된 자소서 평가 목록 조회 (각 자소서별 최신 버전만)
+            List<ResumeEval> deletedResumeEvals = resumeEvalRepository.findLatestVersionByUserEmailAndDeletedAtIsNotNull(email);
             
             for (ResumeEval resumeEval : deletedResumeEvals) {
                 Map<String, Object> evaluation = new HashMap<>();
@@ -760,16 +838,60 @@ public class UserController {
     /**
      * 휴지통에서 평가를 복구합니다.
      * @param id 평가 ID
+     * @param type 평가 타입 (선택적 파라미터)
      * @return 성공 여부
      */
     @PutMapping("/evaluations/{id}/restore")
-    public ResponseEntity<Void> restoreEvaluation(@PathVariable Integer id) {
+    public ResponseEntity<Void> restoreEvaluation(@PathVariable Integer id, @RequestParam(required = false) String type) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         
-        log.info("평가 복구 요청 - 사용자: {}, 평가 ID: {}", email, id);
+        log.info("평가 복구 요청 - 사용자: {}, 평가 ID: {}, 타입: {}", email, id, type);
         
         try {
+            // 타입이 명시적으로 지정된 경우 해당 타입에서만 조회
+            if ("resume".equals(type)) {
+                Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+                if (resumeEvalOpt.isPresent()) {
+                    ResumeEval resumeEval = resumeEvalOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!resumeEval.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    // 같은 resume_id의 모든 버전을 복구
+                    Integer resumeId = resumeEval.getResume().getResumeId();
+                    resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
+
+                    log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    return ResponseEntity.ok().build();
+                }
+                return ResponseEntity.notFound().build();
+            } else if ("interview".equals(type)) {
+                Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
+                if (archiveOpt.isPresent()) {
+                    InterviewArchive archive = archiveOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!archive.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    // 복구 (deleted_at을 null로 설정하고 updated_at 갱신)
+                    archive.setDeletedAt(null);
+                    archive.setUpdatedAt(java.time.LocalDateTime.now());
+                    interviewArchiveRepository.save(archive);
+
+                    log.info("면접 평가 복구 완료 - 평가 ID: {}", id);
+                    return ResponseEntity.ok().build();
+                }
+                return ResponseEntity.notFound().build();
+            }
+            
+            // 타입이 지정되지 않은 경우 기존 로직 (하위 호환성)
             // 먼저 면접 평가에서 조회
             Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
             if (archiveOpt.isPresent()) {
@@ -801,11 +923,11 @@ public class UserController {
                     return ResponseEntity.status(403).build();
                 }
                 
-                // 복구 (deleted_at을 null로 설정)
-                resumeEval.setDeletedAt(null);
-                resumeEvalRepository.save(resumeEval);
+                // 같은 resume_id의 모든 버전을 복구
+                Integer resumeId = resumeEval.getResume().getResumeId();
+                resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
 
-                log.info("자소서 평가 복구 완료 - 평가 ID: {}", id);
+                log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
                 return ResponseEntity.ok().build();
             }
             
@@ -819,19 +941,66 @@ public class UserController {
     /**
      * 특정 평가를 완전히 삭제합니다 (하드 삭제).
      * @param id 평가 ID
+     * @param type 평가 타입 (선택적 파라미터)
      * @return 성공 여부
      */
     @DeleteMapping("/evaluations/{id}")
-    public ResponseEntity<Void> deleteEvaluation(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteEvaluation(@PathVariable Integer id, @RequestParam(required = false) String type) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         
-        log.info("평가 완전 삭제 요청 - 사용자: {}, 평가 ID: {}", email, id);
+        log.info("평가 완전 삭제 요청 - 사용자: {}, 평가 ID: {}, 타입: {}", email, id, type);
         
         try {
-            interviewService.deleteEval(id, email);
+            // 타입이 명시적으로 지정된 경우 해당 타입에서만 조회
+            if ("resume".equals(type)) {
+                Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+                if (resumeEvalOpt.isPresent()) {
+                    ResumeEval resumeEval = resumeEvalOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!resumeEval.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    // 같은 resume_id의 모든 버전을 완전 삭제
+                    Integer resumeId = resumeEval.getResume().getResumeId();
+                    resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
 
-            log.info("평가 완전 삭제 완료 - 평가 ID: {}", id);
+                    log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    return ResponseEntity.ok().build();
+                }
+                return ResponseEntity.notFound().build();
+            } else if ("interview".equals(type)) {
+                interviewService.deleteEval(id, email);
+                log.info("면접 평가 완전 삭제 완료 - 평가 ID: {}", id);
+                return ResponseEntity.ok().build();
+            }
+            
+            // 타입이 지정되지 않은 경우 기존 로직 (하위 호환성)
+            // 먼저 자소서 평가에서 조회
+            Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+            if (resumeEvalOpt.isPresent()) {
+                ResumeEval resumeEval = resumeEvalOpt.get();
+                
+                // 사용자 본인의 평가인지 확인
+                if (!resumeEval.getUser().getEmail().equals(email)) {
+                    log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                    return ResponseEntity.status(403).build();
+                }
+                
+                // 같은 resume_id의 모든 버전을 완전 삭제
+                Integer resumeId = resumeEval.getResume().getResumeId();
+                resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
+
+                log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                return ResponseEntity.ok().build();
+            }
+            
+            // 자소서 평가가 없으면 면접 평가로 처리
+            interviewService.deleteEval(id, email);
+            log.info("면접 평가 완전 삭제 완료 - 평가 ID: {}", id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("평가 완전 삭제 실패: {}", e.getMessage());
