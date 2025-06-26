@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.Base64;
 
 @Slf4j
 @RestController
@@ -94,9 +95,13 @@ public class UserController {
             log.info("조회된 사용자 정보 - 이름: {}, 생년월일: {}, 전화번호: {}, 성별: {}", 
                 user.getName(), user.getBirth(), user.getPhoneNumber(), user.getGender());
 
-            String savedFilename = user.getProfileImage();
-            String imageUrl = savedFilename != null ? "/images/" + savedFilename : null;
-            user.setProfileImage(imageUrl);
+            // 프로필 이미지를 Base64로 변환
+            String imageUrl = null;
+            if (user.getProfileImage() != null && user.getProfileImage().length > 0) {
+                String base64Image = Base64.getEncoder().encodeToString(user.getProfileImage());
+                // MIME 타입은 기본적으로 image/jpeg로 설정 (실제로는 original_filename에서 확장자를 추출하여 설정 가능)
+                imageUrl = "data:image/jpeg;base64," + base64Image;
+            }
             
             UserInfoResponse response = new UserInfoResponse(
                 user.getEmail(),
@@ -104,7 +109,7 @@ public class UserController {
                 user.getBirth() != null ? user.getBirth().toString() : null,
                 user.getPhoneNumber(),
                 user.getGender() != null ? user.getGender().toString() : null,
-                user.getProfileImage(), // 사용자 프로필 URL
+                imageUrl, // 사용자 프로필 Base64 이미지 URL
                 user.getJob(), // 직무 정보
                 user.getCompany(), // 회사 정보
                 user.getUserRole(),
@@ -151,13 +156,20 @@ public class UserController {
             log.info("사용자 정보 수정 요청: {}", email);
             User updatedUser = userService.updateUser(email, request);
 
+            // 프로필 이미지를 Base64로 변환
+            String imageUrl = null;
+            if (updatedUser.getProfileImage() != null && updatedUser.getProfileImage().length > 0) {
+                String base64Image = Base64.getEncoder().encodeToString(updatedUser.getProfileImage());
+                imageUrl = "data:image/jpeg;base64," + base64Image;
+            }
+
             UserInfoResponse response = new UserInfoResponse(
                     updatedUser.getEmail(),
                     updatedUser.getName(),
                     updatedUser.getBirth() != null ? updatedUser.getBirth().toString() : null,
                     updatedUser.getPhoneNumber(),
                     updatedUser.getGender() != null ? updatedUser.getGender().toString() : null,
-                    updatedUser.getProfileImage(), // 프로필 이미지는 나중에 구현
+                    imageUrl, // 프로필 이미지 Base64 URL
                     updatedUser.getJob(), // 직무 정보
                     updatedUser.getCompany(), // 회사 정보
                     updatedUser.getUserRole(),
