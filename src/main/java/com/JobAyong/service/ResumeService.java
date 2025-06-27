@@ -311,28 +311,5 @@ public class ResumeService {
         }
     }
 
-    /**
-     * 자소서 내용을 분석하고 개선안을 제공
-     * @param resumeText 분석할 자소서 원본 텍스트
-     * @return GPT 분석 결과 (JSON 문자열)
-     */
-    public String analyzeResume(String resumeText) {
-        try {
-            System.out.println("=== 자소서 분석 시작 ===");
-            System.out.println("분석할 텍스트 길이: " + resumeText.length() + " 문자");
-            
-            String analysisResult = gptService.analyzeResumeContent(resumeText);
-            
-            System.out.println("분석 결과 길이: " + analysisResult.length() + " 문자");
-            System.out.println("=== 자소서 분석 완료 ===");
-            
-            return analysisResult;
-            
-        } catch (Exception e) {
-            System.err.println("=== 자소서 분석 실패 ===");
-            System.err.println("오류 메시지: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("자소서 분석 중 오류가 발생했습니다: " + e.getMessage());
-        }
-    }
+
 }

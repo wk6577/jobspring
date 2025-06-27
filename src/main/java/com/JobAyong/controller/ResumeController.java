@@ -220,36 +220,7 @@ public class ResumeController {
         }
     }
 
-    /**
-     * 자소서 분석 API 엔드포인트
-     */
-    @PostMapping("/analyze")
-    public ResponseEntity<?> analyzeResume(@RequestBody Map<String, String> request) {
-        try {
-            String resumeText = request.get("resumeText");
-            
-            if (resumeText == null || resumeText.trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                    .body(createErrorResponse("분석할 자소서 내용이 없습니다."));
-            }
-            
-            System.out.println("=== 자소서 분석 API 호출 ===");
-            System.out.println("분석할 텍스트 길이: " + resumeText.length() + " 문자");
-            
-            String analysisResult = resumeService.analyzeResume(resumeText);
-            
-            System.out.println("=== 자소서 분석 API 완료 ===");
-            return ResponseEntity.ok(createSuccessResponse("자소서 분석 완료", analysisResult));
-            
-        } catch (Exception e) {
-            System.err.println("=== 자소서 분석 API 실패 ===");
-            System.err.println("오류 메시지: " + e.getMessage());
-            e.printStackTrace();
-            
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(createErrorResponse("자소서 분석 실패: " + e.getMessage()));
-        }
-    }
+
 
     // 응답 헬퍼 메서드들
     private Map<String, Object> createSuccessResponse(String message, Object data) {
