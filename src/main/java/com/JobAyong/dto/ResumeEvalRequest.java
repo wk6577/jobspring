@@ -7,7 +7,6 @@ import lombok.Setter;
 @Setter
 public class ResumeEvalRequest {
     private Integer resumeId;            // 평가할 이력서 ID
-    private String userEmail;            // 평가자 이메일
     private String resumeOrg;            // 평가 받는 원본 텍스트
     private String resumeImp;            // AI가 개선해준 자소서
     private String reason;               // 개선 이유

@@ -10,6 +10,8 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +24,7 @@ import com.JobAyong.dto.ResumeResponse;
 import com.JobAyong.dto.ResumeEvalRequest;
 import com.JobAyong.dto.ResumeEvalResponse;
 import com.JobAyong.entity.User;
+import com.JobAyong.repository.UserRepository;
 import com.JobAyong.constant.ResumeType;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,12 +33,14 @@ import java.time.format.DateTimeFormatter;
 public class ResumeService {
     private final ResumeEvalRepository resumeEvalRepository;
     private final ResumeRepository resumeRepository;
+    private final UserRepository userRepository;
     private final GPTService gptService;
     
     @Autowired
-    public ResumeService(ResumeRepository resumeRepository, ResumeEvalRepository resumeEvalRepository, GPTService gptService) {
+    public ResumeService(ResumeRepository resumeRepository, ResumeEvalRepository resumeEvalRepository, UserRepository userRepository, GPTService gptService) {
         this.resumeEvalRepository = resumeEvalRepository;
         this.resumeRepository = resumeRepository;
+        this.userRepository = userRepository;
         this.gptService = gptService;
     }
 
@@ -79,7 +84,10 @@ public class ResumeService {
     }
 
     // ResumeRequest -> Resume 엔티티 변환 (User 객체를 파라미터로 받음)
-    public Resume toResumeEntity(ResumeRequest dto, User user) {
+    public Resume toResumeEntity(ResumeRequest dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         Resume resume = new Resume();
         resume.setUser(user);
         

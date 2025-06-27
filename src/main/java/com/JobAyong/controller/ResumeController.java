@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,10 +46,7 @@ public class ResumeController {
 
     @PostMapping
     public ResponseEntity<ResumeResponse> createResume(@RequestBody ResumeRequest request) {
-        // User 조회 (예시)
-        User user = userRepository.findByEmail(request.getUserEmail())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-        Resume resume = resumeService.toResumeEntity(request, user);
+        Resume resume = resumeService.toResumeEntity(request);
         Resume saved = resumeService.save(resume);
         ResumeResponse response = resumeService.toResumeResponse(saved);
         return ResponseEntity.ok(response);
@@ -56,10 +55,13 @@ public class ResumeController {
     @PostMapping("/file")
     public ResponseEntity<?> createResumeFromFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("userEmail") String userEmail,
             @RequestParam(value = "resumeTitle", required = false) String resumeTitle) {
         
         try {
+            // Authentication에서 사용자 정보 가져오기
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userEmail = authentication.getName();
+            
             System.out.println("=== 자소서 파일 업로드 API 호출 ===");
             System.out.println("파일명: " + file.getOriginalFilename());
             System.out.println("사용자 이메일: " + userEmail);
@@ -161,8 +163,12 @@ public class ResumeController {
 
     @PostMapping("/eval")
     public ResponseEntity<ResumeEvalResponse> createResumeEval(@RequestBody ResumeEvalRequest request) {
-        // User, Resume 조회 (예시)
-        User user = userRepository.findByEmail(request.getUserEmail())
+        // Authentication에서 사용자 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+        
+        // User, Resume 조회
+        User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Resume resume = resumeService.findByResumeId(request.getResumeId())
                 .orElseThrow(() -> new RuntimeException("Resume not found"));
