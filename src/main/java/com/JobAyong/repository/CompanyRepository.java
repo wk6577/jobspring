@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CompanyRepository extends JpaRepository<Company, Long> {
+public interface CompanyRepository extends JpaRepository<Company, Integer> {
     List<Company> findByNameContaining(String name);
     List<Company> findByIndustry(String industry);
     List<Company> findBySize(CompanySize size);
