@@ -40,8 +40,9 @@ public class User {
     @Column(name = "gender", nullable = false)
     private Gender gender;
 
-    @Column(name = "profile_image")
-    private String profileImage;
+    @Lob
+    @Column(name = "profile_image", columnDefinition = "LONGBLOB")
+    private byte[] profileImage;
 
     @Column(name = "original_filename")
     private String originalFilename;

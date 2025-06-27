@@ -25,7 +25,7 @@ CREATE TABLE `user` (
     `birth` DATE NOT NULL,
     `phone_number` VARCHAR(20) NOT NULL,
     `gender` ENUM('male', 'female') NOT NULL,
-    `profile_image` VARCHAR(255) NULL COMMENT '프로필 사진 파일 url',
+    `profile_image` LONGBLOB NULL COMMENT '프로필 사진 바이너리 데이터',
     `original_filename` VARCHAR(255) NULL COMMENT '업로드시 사용자가 올린 파일명',
     `job` VARCHAR(255) NULL,
     `company` VARCHAR(255) NULL,

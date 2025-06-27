@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -284,29 +285,39 @@ public class UserService {
             User user = userRepository.findByEmailAndNotDeleted(email)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-            // 2. 파일 관련 정보
+            // 2. 파일 유효성 검사
+            if (file.isEmpty()) {
+                throw new RuntimeException("업로드된 파일이 비어있습니다.");
+            }
+
             String originalFilename = file.getOriginalFilename();
-            String fileExt = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String savedFilename = UUID.randomUUID().toString() + fileExt;
+            if (originalFilename == null || originalFilename.trim().isEmpty()) {
+                throw new RuntimeException("파일명이 유효하지 않습니다.");
+            }
 
-            // 3. 저장 경로
-            String uploadPath = "D:/T2/upload/image/";
-            File dir = new File(uploadPath);
-            if (!dir.exists()) dir.mkdirs();
+            // 3. 파일 타입 검사 (이미지 파일만 허용)
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new RuntimeException("이미지 파일만 업로드 가능합니다.");
+            }
 
-            String fullPath = uploadPath + savedFilename;
+            // 4. 파일 크기 검사 (10MB 제한)
+            if (file.getSize() > 10 * 1024 * 1024) {
+                throw new RuntimeException("파일 크기는 10MB를 초과할 수 없습니다.");
+            }
 
-            // 4. 실제 저장
-            file.transferTo(new File(fullPath));
-
-            // 5. DB 반영 (유저 정보에 저장된 파일명 추가)
-            user.setProfileImage(savedFilename);
+            // 5. 파일을 바이너리 데이터로 변환하여 DB에 저장
+            byte[] imageData = file.getBytes();
+            user.setProfileImage(imageData);
             user.setOriginalFilename(originalFilename);
 
-            userRepository.save(user); // 저장
+            userRepository.save(user);
 
-            // 6. 응답 생성
-            return new ProfileImageUploadResponse(originalFilename, savedFilename, "/images/" + savedFilename); // 프론트에서 접근할 수 있는 URL 경로로 지정
+            // 6. 응답 생성 (Base64로 인코딩된 이미지 데이터 URL 반환)
+            String base64Image = Base64.getEncoder().encodeToString(imageData);
+            String imageUrl = "data:" + contentType + ";base64," + base64Image;
+
+            return new ProfileImageUploadResponse(originalFilename, null, imageUrl);
 
         } catch (IOException e) {
             throw new RuntimeException("이미지 저장 실패: " + e.getMessage());
