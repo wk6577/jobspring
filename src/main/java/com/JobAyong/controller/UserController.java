@@ -459,7 +459,7 @@ public class UserController {
                     
                     // 사용자 본인의 평가인지 확인
                     if (!archive.getUser().getEmail().equals(email)) {
-                        log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 면접 평가({})에 접근 시도", email, id);
                         return ResponseEntity.status(403).build();
                     }
                     
@@ -468,22 +468,7 @@ public class UserController {
                 return ResponseEntity.notFound().build();
             }
             
-            // 타입이 지정되지 않은 경우 기존 로직 (하위 호환성)
-            // 먼저 인터뷰 아카이브에서 조회
-            Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
-            if (archiveOpt.isPresent()) {
-                InterviewArchive archive = archiveOpt.get();
-                
-                // 사용자 본인의 평가인지 확인
-                if (!archive.getUser().getEmail().equals(email)) {
-                    log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
-                    return ResponseEntity.status(403).build();
-                }
-                
-                return getInterviewEvaluationDetail(archive);
-            }
-            
-            // 인터뷰 아카이브에 없으면 자소서 평가에서 조회
+            // 타입이 지정되지 않은 경우 자소서 평가부터 확인
             Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
             if (resumeEvalOpt.isPresent()) {
                 ResumeEval resumeEval = resumeEvalOpt.get();
@@ -500,6 +485,55 @@ public class UserController {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             log.error("평가 상세 정보 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 특정 자소서 평가의 모든 버전을 조회합니다.
+     * @param id 자소서 평가 ID
+     * @return 해당 자소서의 모든 버전 목록
+     */
+    @GetMapping("/evaluations/{id}/versions")
+    public ResponseEntity<List<Map<String, Object>>> getResumeEvaluationVersions(@PathVariable Integer id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        
+        log.info("자소서 평가 버전 목록 조회 요청 - 사용자: {}, 평가 ID: {}", email, id);
+        
+        try {
+            // 먼저 해당 평가가 존재하고 사용자 본인의 것인지 확인
+            Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+            if (!resumeEvalOpt.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            ResumeEval resumeEval = resumeEvalOpt.get();
+            
+            // 사용자 본인의 평가인지 확인
+            if (!resumeEval.getUser().getEmail().equals(email)) {
+                log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                return ResponseEntity.status(403).build();
+            }
+            
+            // 해당 자소서의 모든 버전 조회
+            Integer resumeId = resumeEval.getResume().getResumeId();
+            List<ResumeEval> allVersions = resumeEvalRepository.findAllVersionsByResumeId(resumeId);
+            
+            // 버전 목록 구성
+            List<Map<String, Object>> versionList = new ArrayList<>();
+            for (ResumeEval version : allVersions) {
+                Map<String, Object> versionInfo = new HashMap<>();
+                versionInfo.put("id", version.getResumeEvalId());
+                versionInfo.put("version", version.getResumeEvalVersion());
+                versionInfo.put("createdAt", version.getCreatedAt());
+                versionList.add(versionInfo);
+            }
+            
+            log.info("자소서 평가 버전 목록 조회 완료 - 자소서 ID: {}, 버전 수: {}", resumeId, versionList.size());
+            return ResponseEntity.ok(versionList);
+        } catch (Exception e) {
+            log.error("자소서 평가 버전 목록 조회 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
