@@ -57,4 +57,8 @@ public interface ResumeEvalRepository extends JpaRepository<ResumeEval, Integer>
     @Query("DELETE FROM ResumeEval re WHERE re.resume.resumeId = :resumeId")
     void deleteAllVersionsByResumeId(@Param("resumeId") Integer resumeId);
 
+    // 특정 자소서의 모든 버전 조회 (삭제되지 않은 것만, 버전 순으로 정렬)
+    @Query("SELECT re FROM ResumeEval re WHERE re.resume.resumeId = :resumeId AND re.deletedAt IS NULL ORDER BY re.resumeEvalVersion DESC")
+    List<ResumeEval> findAllVersionsByResumeId(@Param("resumeId") Integer resumeId);
+
 }
