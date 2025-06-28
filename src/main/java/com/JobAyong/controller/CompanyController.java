@@ -92,7 +92,7 @@ public class CompanyController {
                         .status(HttpStatus.OK)
                         .body(responseMap);
             }else{
-                responseMap.put("success", response);
+                responseMap.put("success", false);
                 responseMap.put("message", "회사 상세 정보 조회에 실패함.");
                 responseMap.put("data", null);
                 return ResponseEntity
