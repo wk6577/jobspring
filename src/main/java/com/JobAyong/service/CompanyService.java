@@ -50,10 +50,7 @@ public class CompanyService {
      * */
     public Boolean findByCompanyId(int companyId){
         Optional<Company> companyOpt = companyRepository.findByCompanyId(companyId);
-        if (companyOpt.isPresent()) {
-            return true;
-        }
-        return false;
+        return companyOpt.isPresent();
     }
 
     /**
@@ -82,6 +79,18 @@ public class CompanyService {
 
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /**
+     * @apiNote 회사 상세 정보 조회
+     * @author 최선아
+     * */
+    public Optional<Company> detailCompany(Integer id){
+        try {
+            return companyRepository.findById(id);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -66,6 +67,43 @@ public class CompanyController {
             return ResponseEntity.status(HttpStatus.CREATED).body(true);
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+        }
+    }
+
+    /**
+     * @apiNote 회사 상세 정보 조회
+     * @author 최선아
+     *
+     * @param id 조회할 회사 ID
+     * @return 200 OK + true (성공), 500 Internal Server Error + false (실패)
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> detailCompany(@PathVariable Integer id){
+        Boolean exit = companyService.findByCompanyId(id);
+        Map<String, Object> responseMap = new HashMap<>();
+
+        if(exit){
+            Optional<Company> response = companyService.detailCompany(id);
+            if (!response.isEmpty()) {
+                responseMap.put("success", true);
+                responseMap.put("message", "회사 상세 정보 조회 성공.");
+                responseMap.put("data", response.get()); // Company 객체
+                return ResponseEntity
+                        .status(HttpStatus.OK)
+                        .body(responseMap);
+            }else{
+                responseMap.put("success", response);
+                responseMap.put("message", "회사 상세 정보 조회에 실패함.");
+                responseMap.put("data", null);
+                return ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(responseMap);
+            }
+        }else{
+            responseMap.put("success", false);
+            responseMap.put("message", "존재하지 않는 회사 ID 입니다.");
+            responseMap.put("data", null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseMap);
         }
     }
 
