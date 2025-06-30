@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 public class ResumeResponse {
     private Integer resumeId;         // 이력서 PK
-    private String userEmail;         // 작성자 이메일
     private String resumeTitle;       // 제목
     private String resumeText;        // 본문
     private String resumeType;        // 'text'만 사용

@@ -120,7 +120,6 @@ public class ResumeService {
     public ResumeResponse toResumeResponse(Resume resume) {
         ResumeResponse dto = new ResumeResponse();
         dto.setResumeId(resume.getResumeId());
-        dto.setUserEmail(resume.getUser() != null ? resume.getUser().getEmail() : null);
         dto.setResumeTitle(resume.getResumeTitle());
         dto.setResumeText(resume.getResumeText());
         dto.setResumeType(resume.getResumeType() != null ? resume.getResumeType().name() : "text");
