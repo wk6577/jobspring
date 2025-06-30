@@ -184,6 +184,7 @@ CREATE TABLE `voice_eval` (
 CREATE TABLE `resume_eval` (
     `resume_eval_id` INT AUTO_INCREMENT NOT NULL,
     `resume_id` INT NOT NULL,
+    `resume_eval_title` VARCHAR(255) NULL,
     `email` VARCHAR(255) NOT NULL,
     `resume_org` TEXT NOT NULL COMMENT '평가 받는 텍스트',
     `resume_imp` TEXT NOT NULL COMMENT 'ai가 개선해준 자소서',
@@ -194,9 +195,11 @@ CREATE TABLE `resume_eval` (
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL,
     PRIMARY KEY (`resume_eval_id`),
-    FOREIGN KEY (`resume_id`) REFERENCES `resume` (`resume_id`),
+    FOREIGN KEY (`resume_id`) REFERENCES `resume` (`resume_id`) ON DELETE SET NULL,
     FOREIGN KEY (`email`) REFERENCES `user` (`email`)
 );
+
+
 -- drop table resume_eval;
 -- report 테이블
 CREATE TABLE `report` (
