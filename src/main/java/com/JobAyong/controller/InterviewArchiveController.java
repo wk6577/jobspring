@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,5 +29,11 @@ public class InterviewArchiveController {
     public ResponseEntity<?> deleteInterviewArchive(@PathVariable int id) {
         interviewArchiveService.deleteById(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/questions-answers")
+    public ResponseEntity<List<Map<String, Object>>> getQuestionsAndAnswers(@PathVariable int id) {
+        List<Map<String, Object>> questionsAndAnswers = interviewArchiveService.getQuestionsAndAnswers(id);
+        return ResponseEntity.ok(questionsAndAnswers);
     }
 }
