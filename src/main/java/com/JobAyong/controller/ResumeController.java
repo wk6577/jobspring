@@ -1,17 +1,14 @@
 package com.JobAyong.controller;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.JobAyong.dto.ResumeRequest;
-import com.JobAyong.dto.ResumeResponse;
 import com.JobAyong.dto.ResumeEvalRequest;
 import com.JobAyong.dto.ResumeEvalResponse;
 import com.JobAyong.entity.Resume;
@@ -44,14 +39,9 @@ public class ResumeController {
         this.userRepository = userRepository;
     }
 
-    @PostMapping
-    public ResponseEntity<ResumeResponse> createResume(@RequestBody ResumeRequest request) {
-        Resume resume = resumeService.toResumeEntity(request);
-        Resume saved = resumeService.save(resume);
-        ResumeResponse response = resumeService.toResumeResponse(saved);
-        return ResponseEntity.ok(response);
-    }
-
+    /**
+     * 파일에서 자소서 생성 및 저장
+     */
     @PostMapping("/file")
     public ResponseEntity<?> createResumeFromFile(
             @RequestParam("file") MultipartFile file,
@@ -83,10 +73,9 @@ public class ResumeController {
             // GPT를 통해 자소서 추출 및 저장
             System.out.println("자소서 생성 시작...");
             Resume saved = resumeService.createResumeFromFile(file, user, resumeTitle);
-            ResumeResponse response = resumeService.toResumeResponse(saved);
             
             System.out.println("=== 자소서 파일 업로드 API 완료 ===");
-            return ResponseEntity.ok(createSuccessResponse("자소서가 성공적으로 생성되었습니다.", response));
+            return ResponseEntity.ok(createSuccessResponse("자소서가 성공적으로 생성되었습니다.", saved));
             
         } catch (Exception e) {
             System.err.println("=== 자소서 파일 업로드 API 실패 ===");
@@ -140,27 +129,9 @@ public class ResumeController {
         }
     }
 
-    @GetMapping("/{resumeId}")
-    public ResponseEntity<ResumeResponse> getResume(@PathVariable Integer resumeId) {
-        Optional<Resume> found = resumeService.findByResumeId(resumeId);
-        return found.map(resumeService::toResumeResponse)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping
-    public List<ResumeResponse> getAllResumes() {
-        return resumeService.findAllResume().stream()
-                .map(resumeService::toResumeResponse)
-                .collect(Collectors.toList());
-    }
-
-    @DeleteMapping("/{resumeId}")
-    public ResponseEntity<Void> deleteResume(@PathVariable Integer resumeId) {
-        resumeService.deleteByResumeId(resumeId);
-        return ResponseEntity.noContent().build();
-    }
-
+    /**
+     * 자소서 평가 생성
+     */
     @PostMapping("/eval")
     public ResponseEntity<ResumeEvalResponse> createResumeEval(@RequestBody ResumeEvalRequest request) {
         // Authentication에서 사용자 정보 가져오기
@@ -178,27 +149,9 @@ public class ResumeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/eval/{resumeEvalId}")
-    public ResponseEntity<ResumeEvalResponse> getResumeEval(@PathVariable Integer resumeEvalId) {
-        Optional<ResumeEval> found = resumeService.findByResumeEvalId(resumeEvalId);
-        return found.map(resumeService::toResumeEvalResponse)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/eval")
-    public List<ResumeEvalResponse> getAllResumeEvals() {
-        return resumeService.findAllResumeEval().stream()
-                .map(resumeService::toResumeEvalResponse)
-                .collect(Collectors.toList());
-    }
-
-    @DeleteMapping("/eval/{resumeEvalId}")
-    public ResponseEntity<Void> deleteResumeEval(@PathVariable Integer resumeEvalId) {
-        resumeService.deleteById(resumeEvalId);
-        return ResponseEntity.noContent().build();
-    }
-
+    /**
+     * 특정 자소서의 최대 평가 버전 조회
+     */
     @GetMapping("/eval/max-version/{resumeId}")
     public ResponseEntity<Integer> getMaxVersionByResumeId(@PathVariable Integer resumeId) {
         Integer maxVersion = resumeService.getMaxVersionByResumeId(resumeId);
@@ -219,8 +172,6 @@ public class ResumeController {
                 .body(createErrorResponse("OpenAI API 연결 테스트 실패: " + e.getMessage()));
         }
     }
-
-
 
     // 응답 헬퍼 메서드들
     private Map<String, Object> createSuccessResponse(String message, Object data) {
