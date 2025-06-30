@@ -24,6 +24,9 @@ public class ResumeEval {
     @JoinColumn(name = "email", nullable = false)
     private User user;
 
+    @Column(name = "resume_eval_title")
+    private String resumeEvalTitle;
+
     @Column(name = "resume_org", nullable = false, columnDefinition = "TEXT")
     private String resumeOrg;
 

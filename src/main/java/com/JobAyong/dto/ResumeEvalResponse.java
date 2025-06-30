@@ -11,6 +11,7 @@ public class ResumeEvalResponse {
     private Integer resumeEvalId;        // 평가 PK
     private Integer resumeId;            // 이력서 ID
     private String userEmail;            // 평가자 이메일
+    private String resumeEvalTitle;      // 평가 제목
     private String resumeOrg;            // 평가 받는 원본 텍스트
     private String resumeImp;            // AI가 개선해준 자소서
     private String reason;               // 개선 이유

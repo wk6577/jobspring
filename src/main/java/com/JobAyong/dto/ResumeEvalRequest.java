@@ -13,4 +13,5 @@ public class ResumeEvalRequest {
     private String missingAreas;         // 부족한 영역 JSON 데이터
     private String resumeFin;            // 수정 저장할 최종 자소서
     private Integer resumeEvalVersion;   // 평가 버전 (default 1)
+    private String resumeEvalTitle;      // 평가 제목
 }

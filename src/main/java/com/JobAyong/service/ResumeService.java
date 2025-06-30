@@ -134,6 +134,7 @@ public class ResumeService {
         ResumeEval eval = new ResumeEval();
         eval.setResume(resume);
         eval.setUser(user);
+        eval.setResumeEvalTitle(dto.getResumeEvalTitle());
         eval.setResumeOrg(dto.getResumeOrg());
         eval.setResumeImp(dto.getResumeImp());
         eval.setReason(dto.getReason());
@@ -149,6 +150,7 @@ public class ResumeService {
         dto.setResumeEvalId(eval.getResumeEvalId());
         dto.setResumeId(eval.getResume().getResumeId());
         dto.setUserEmail(eval.getUser().getEmail());
+        dto.setResumeEvalTitle(eval.getResumeEvalTitle());
         dto.setResumeOrg(eval.getResumeOrg());
         dto.setResumeImp(eval.getResumeImp());
         dto.setReason(eval.getReason());
