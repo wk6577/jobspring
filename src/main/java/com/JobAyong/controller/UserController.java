@@ -1446,7 +1446,11 @@ public class UserController {
                 return ResponseEntity.status(403).build();
             }
             
-            // 데이터베이스에서 완전 삭제
+            // 먼저 resume_eval 테이블의 관련 데이터 삭제
+            resumeEvalRepository.deleteAllVersionsByResumeId(id);
+            log.info("자기소개서 평가 데이터 삭제 완료 - 자기소개서 ID: {}", id);
+            
+            // 그 다음 resume 테이블에서 삭제
             resumeRepository.delete(resume);
             
             log.info("자기소개서 완전 삭제 완료 - 자기소개서 ID: {}", id);
