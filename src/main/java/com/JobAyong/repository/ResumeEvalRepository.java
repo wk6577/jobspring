@@ -25,17 +25,17 @@ public interface ResumeEvalRepository extends JpaRepository<ResumeEval, Integer>
     @Query("SELECT re FROM ResumeEval re WHERE re.user.email = :email AND re.deletedAt IS NOT NULL ORDER BY re.deletedAt DESC")
     List<ResumeEval> findByUserEmailAndDeletedAtIsNotNull(@Param("email") String email);
 
-    // 사용자 이메일로 각 자소서별 최신 버전의 평가만 조회 (삭제되지 않은 것만)
+    // 사용자 이메일로 각 자소서별 최신 버전의 평가만 조회 (삭제되지 않은 것만, resume_id가 NULL인 평가도 포함)
     @Query("SELECT re FROM ResumeEval re WHERE re.user.email = :email AND re.deletedAt IS NULL " +
-           "AND re.resumeEvalVersion = (SELECT MAX(re2.resumeEvalVersion) FROM ResumeEval re2 " +
-           "WHERE re2.resume.resumeId = re.resume.resumeId AND re2.deletedAt IS NULL) " +
+           "AND (re.resume IS NULL OR re.resumeEvalVersion = (SELECT MAX(re2.resumeEvalVersion) FROM ResumeEval re2 " +
+           "WHERE re2.resume.resumeId = re.resume.resumeId AND re2.deletedAt IS NULL)) " +
            "ORDER BY re.createdAt DESC")
     List<ResumeEval> findLatestVersionByUserEmailAndDeletedAtIsNull(@Param("email") String email);
 
-    // 사용자 이메일로 각 자소서별 최신 버전의 삭제된 평가만 조회 (휴지통용)
+    // 사용자 이메일로 각 자소서별 최신 버전의 삭제된 평가만 조회 (휴지통용, resume_id가 NULL인 평가도 포함)
     @Query("SELECT re FROM ResumeEval re WHERE re.user.email = :email AND re.deletedAt IS NOT NULL " +
-           "AND re.resumeEvalVersion = (SELECT MAX(re2.resumeEvalVersion) FROM ResumeEval re2 " +
-           "WHERE re2.resume.resumeId = re.resume.resumeId AND re2.deletedAt IS NOT NULL) " +
+           "AND (re.resume IS NULL OR re.resumeEvalVersion = (SELECT MAX(re2.resumeEvalVersion) FROM ResumeEval re2 " +
+           "WHERE re2.resume.resumeId = re.resume.resumeId AND re2.deletedAt IS NOT NULL)) " +
            "ORDER BY re.deletedAt DESC")
     List<ResumeEval> findLatestVersionByUserEmailAndDeletedAtIsNotNull(@Param("email") String email);
 

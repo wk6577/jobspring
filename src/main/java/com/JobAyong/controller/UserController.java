@@ -516,9 +516,17 @@ public class UserController {
                 return ResponseEntity.status(403).build();
             }
             
-            // 해당 자소서의 모든 버전 조회
-            Integer resumeId = resumeEval.getResume().getResumeId();
-            List<ResumeEval> allVersions = resumeEvalRepository.findAllVersionsByResumeId(resumeId);
+            // 해당 자소서의 모든 버전 조회 (resume_id가 NULL인 경우 해당 평가만 반환)
+            List<ResumeEval> allVersions = new ArrayList<>();
+            Integer resumeId = null;
+            
+            if (resumeEval.getResume() != null) {
+                resumeId = resumeEval.getResume().getResumeId();
+                allVersions = resumeEvalRepository.findAllVersionsByResumeId(resumeId);
+            } else {
+                // resume_id가 NULL인 경우 해당 평가만 추가 (자기소개서가 삭제된 평가)
+                allVersions.add(resumeEval);
+            }
             
             // 버전 목록 구성
             List<Map<String, Object>> versionList = new ArrayList<>();
@@ -907,11 +915,17 @@ public class UserController {
                         return ResponseEntity.status(403).build();
                     }
                     
-                    // 같은 resume_id의 모든 버전을 복구
-                    Integer resumeId = resumeEval.getResume().getResumeId();
-                    resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
-
-                    log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    // 같은 resume_id의 모든 버전을 복구 (resume_id가 NULL인 경우 해당 평가만 복구)
+                    if (resumeEval.getResume() != null) {
+                        Integer resumeId = resumeEval.getResume().getResumeId();
+                        resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
+                        log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    } else {
+                        // resume_id가 NULL인 경우 해당 평가만 복구
+                        resumeEval.setDeletedAt(null);
+                        resumeEvalRepository.save(resumeEval);
+                        log.info("자소서 평가 복구 완료 (자소서 삭제됨) - 평가 ID: {}", id);
+                    }
                     return ResponseEntity.ok().build();
                 }
                 return ResponseEntity.notFound().build();
@@ -969,11 +983,17 @@ public class UserController {
                     return ResponseEntity.status(403).build();
                 }
                 
-                // 같은 resume_id의 모든 버전을 복구
-                Integer resumeId = resumeEval.getResume().getResumeId();
-                resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
-
-                log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                // 같은 resume_id의 모든 버전을 복구 (resume_id가 NULL인 경우 해당 평가만 복구)
+                if (resumeEval.getResume() != null) {
+                    Integer resumeId = resumeEval.getResume().getResumeId();
+                    resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
+                    log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                } else {
+                    // resume_id가 NULL인 경우 해당 평가만 복구
+                    resumeEval.setDeletedAt(null);
+                    resumeEvalRepository.save(resumeEval);
+                    log.info("자소서 평가 복구 완료 (자소서 삭제됨) - 평가 ID: {}", id);
+                }
                 return ResponseEntity.ok().build();
             }
             
@@ -1010,11 +1030,16 @@ public class UserController {
                         return ResponseEntity.status(403).build();
                     }
                     
-                    // 같은 resume_id의 모든 버전을 완전 삭제
-                    Integer resumeId = resumeEval.getResume().getResumeId();
-                    resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
-
-                    log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    // 같은 resume_id의 모든 버전을 완전 삭제 (resume_id가 NULL인 경우 해당 평가만 삭제)
+                    if (resumeEval.getResume() != null) {
+                        Integer resumeId = resumeEval.getResume().getResumeId();
+                        resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
+                        log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    } else {
+                        // resume_id가 NULL인 경우 해당 평가만 삭제
+                        resumeEvalRepository.delete(resumeEval);
+                        log.info("자소서 평가 완전 삭제 완료 (자소서 삭제됨) - 평가 ID: {}", id);
+                    }
                     return ResponseEntity.ok().build();
                 }
                 return ResponseEntity.notFound().build();
@@ -1036,11 +1061,16 @@ public class UserController {
                     return ResponseEntity.status(403).build();
                 }
                 
-                // 같은 resume_id의 모든 버전을 완전 삭제
-                Integer resumeId = resumeEval.getResume().getResumeId();
-                resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
-
-                log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                // 같은 resume_id의 모든 버전을 완전 삭제 (resume_id가 NULL인 경우 해당 평가만 삭제)
+                if (resumeEval.getResume() != null) {
+                    Integer resumeId = resumeEval.getResume().getResumeId();
+                    resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
+                    log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                } else {
+                    // resume_id가 NULL인 경우 해당 평가만 삭제
+                    resumeEvalRepository.delete(resumeEval);
+                    log.info("자소서 평가 완전 삭제 완료 (자소서 삭제됨) - 평가 ID: {}", id);
+                }
                 return ResponseEntity.ok().build();
             }
             
@@ -1446,12 +1476,9 @@ public class UserController {
                 return ResponseEntity.status(403).build();
             }
             
-            // 먼저 resume_eval 테이블의 관련 데이터 삭제
-            resumeEvalRepository.deleteAllVersionsByResumeId(id);
-            log.info("자기소개서 평가 데이터 삭제 완료 - 자기소개서 ID: {}", id);
-            
-            // 그 다음 resume 테이블에서 삭제
+            // resume 테이블에서 삭제 (외래키 제약조건에 의해 resume_eval의 resume_id는 자동으로 NULL로 설정됨)
             resumeRepository.delete(resume);
+            log.info("자기소개서 삭제 완료 - 관련 평가의 resume_id는 NULL로 설정됨");
             
             log.info("자기소개서 완전 삭제 완료 - 자기소개서 ID: {}", id);
             return ResponseEntity.ok().build();

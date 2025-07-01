@@ -17,7 +17,7 @@ public class ResumeEval {
     private Integer resumeEvalId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resume_id", nullable = false)
+    @JoinColumn(name = "resume_id", nullable = true)
     private Resume resume;
 
     @ManyToOne(fetch = FetchType.LAZY)
