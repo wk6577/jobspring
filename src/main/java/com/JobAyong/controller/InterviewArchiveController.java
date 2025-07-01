@@ -3,12 +3,8 @@ package com.JobAyong.controller;
 import com.JobAyong.dto.InterviewArchiveResponse;
 import com.JobAyong.service.InterviewArchiveService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.Map;
@@ -35,5 +31,12 @@ public class InterviewArchiveController {
     public ResponseEntity<List<Map<String, Object>>> getQuestionsAndAnswers(@PathVariable int id) {
         List<Map<String, Object>> questionsAndAnswers = interviewArchiveService.getQuestionsAndAnswers(id);
         return ResponseEntity.ok(questionsAndAnswers);
+    }
+
+    // 관리자 전용, 전체 면접 기록 조회 (권한 필터 없이 전체)
+    @GetMapping("/admin/all")
+    public ResponseEntity<List<InterviewArchiveResponse>> getAllArchivesForAdmin() {
+        List<InterviewArchiveResponse> allArchives = interviewArchiveService.getAllArchivesForAdmin();
+        return ResponseEntity.ok(allArchives);
     }
 }
