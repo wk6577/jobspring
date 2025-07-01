@@ -6,12 +6,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
     long countByStatus(String status);
+    long countByCreatedAtAfterAndDeletedAtIsNull(LocalDateTime date);
 
     // 탈퇴하지 않은 사용자만 조회
     @Query("SELECT u FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
