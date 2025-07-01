@@ -393,7 +393,7 @@ public class UserController {
             for (ResumeEval resumeEval : resumeEvals) {
                 Map<String, Object> evaluation = new HashMap<>();
                 evaluation.put("id", resumeEval.getResumeEvalId());
-                evaluation.put("title", resumeEval.getResume().getResumeTitle());
+                evaluation.put("title", resumeEval.getResumeEvalTitle());
                 evaluation.put("type", "resume");
                 evaluation.put("createdAt", resumeEval.getCreatedAt());
                 evaluation.put("companyName", null); // Resume 엔티티에 회사명 필드가 없음
@@ -516,9 +516,17 @@ public class UserController {
                 return ResponseEntity.status(403).build();
             }
             
-            // 해당 자소서의 모든 버전 조회
-            Integer resumeId = resumeEval.getResume().getResumeId();
-            List<ResumeEval> allVersions = resumeEvalRepository.findAllVersionsByResumeId(resumeId);
+            // 해당 자소서의 모든 버전 조회 (resume_id가 NULL인 경우 해당 평가만 반환)
+            List<ResumeEval> allVersions = new ArrayList<>();
+            Integer resumeId = null;
+            
+            if (resumeEval.getResume() != null) {
+                resumeId = resumeEval.getResume().getResumeId();
+                allVersions = resumeEvalRepository.findAllVersionsByResumeId(resumeId);
+            } else {
+                // resume_id가 NULL인 경우 해당 평가만 추가 (자기소개서가 삭제된 평가)
+                allVersions.add(resumeEval);
+            }
             
             // 버전 목록 구성
             List<Map<String, Object>> versionList = new ArrayList<>();
@@ -673,7 +681,7 @@ public class UserController {
             // 결과 데이터 구성
             Map<String, Object> result = new HashMap<>();
             result.put("id", resumeEval.getResumeEvalId());
-            result.put("title", resumeEval.getResume().getResumeTitle());
+            result.put("title", resumeEval.getResumeEvalTitle());
             result.put("type", "resume");
             result.put("createdAt", resumeEval.getCreatedAt());
             result.put("companyName", null); // Resume 엔티티에 회사명 필드가 없음
@@ -850,7 +858,7 @@ public class UserController {
             for (ResumeEval resumeEval : deletedResumeEvals) {
                 Map<String, Object> evaluation = new HashMap<>();
                 evaluation.put("id", resumeEval.getResumeEvalId());
-                evaluation.put("title", resumeEval.getResume().getResumeTitle());
+                evaluation.put("title", resumeEval.getResumeEvalTitle());
                 evaluation.put("type", "resume");
                 evaluation.put("createdAt", resumeEval.getCreatedAt());
                 evaluation.put("deletedAt", resumeEval.getDeletedAt());
@@ -907,11 +915,17 @@ public class UserController {
                         return ResponseEntity.status(403).build();
                     }
                     
-                    // 같은 resume_id의 모든 버전을 복구
-                    Integer resumeId = resumeEval.getResume().getResumeId();
-                    resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
-
-                    log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    // 같은 resume_id의 모든 버전을 복구 (resume_id가 NULL인 경우 해당 평가만 복구)
+                    if (resumeEval.getResume() != null) {
+                        Integer resumeId = resumeEval.getResume().getResumeId();
+                        resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
+                        log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    } else {
+                        // resume_id가 NULL인 경우 해당 평가만 복구
+                        resumeEval.setDeletedAt(null);
+                        resumeEvalRepository.save(resumeEval);
+                        log.info("자소서 평가 복구 완료 (자소서 삭제됨) - 평가 ID: {}", id);
+                    }
                     return ResponseEntity.ok().build();
                 }
                 return ResponseEntity.notFound().build();
@@ -969,11 +983,17 @@ public class UserController {
                     return ResponseEntity.status(403).build();
                 }
                 
-                // 같은 resume_id의 모든 버전을 복구
-                Integer resumeId = resumeEval.getResume().getResumeId();
-                resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
-
-                log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                // 같은 resume_id의 모든 버전을 복구 (resume_id가 NULL인 경우 해당 평가만 복구)
+                if (resumeEval.getResume() != null) {
+                    Integer resumeId = resumeEval.getResume().getResumeId();
+                    resumeEvalRepository.restoreAllVersionsByResumeId(resumeId);
+                    log.info("자소서 평가 모든 버전 복구 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                } else {
+                    // resume_id가 NULL인 경우 해당 평가만 복구
+                    resumeEval.setDeletedAt(null);
+                    resumeEvalRepository.save(resumeEval);
+                    log.info("자소서 평가 복구 완료 (자소서 삭제됨) - 평가 ID: {}", id);
+                }
                 return ResponseEntity.ok().build();
             }
             
@@ -1010,11 +1030,16 @@ public class UserController {
                         return ResponseEntity.status(403).build();
                     }
                     
-                    // 같은 resume_id의 모든 버전을 완전 삭제
-                    Integer resumeId = resumeEval.getResume().getResumeId();
-                    resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
-
-                    log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    // 같은 resume_id의 모든 버전을 완전 삭제 (resume_id가 NULL인 경우 해당 평가만 삭제)
+                    if (resumeEval.getResume() != null) {
+                        Integer resumeId = resumeEval.getResume().getResumeId();
+                        resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
+                        log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                    } else {
+                        // resume_id가 NULL인 경우 해당 평가만 삭제
+                        resumeEvalRepository.delete(resumeEval);
+                        log.info("자소서 평가 완전 삭제 완료 (자소서 삭제됨) - 평가 ID: {}", id);
+                    }
                     return ResponseEntity.ok().build();
                 }
                 return ResponseEntity.notFound().build();
@@ -1036,11 +1061,16 @@ public class UserController {
                     return ResponseEntity.status(403).build();
                 }
                 
-                // 같은 resume_id의 모든 버전을 완전 삭제
-                Integer resumeId = resumeEval.getResume().getResumeId();
-                resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
-
-                log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                // 같은 resume_id의 모든 버전을 완전 삭제 (resume_id가 NULL인 경우 해당 평가만 삭제)
+                if (resumeEval.getResume() != null) {
+                    Integer resumeId = resumeEval.getResume().getResumeId();
+                    resumeEvalRepository.deleteAllVersionsByResumeId(resumeId);
+                    log.info("자소서 평가 모든 버전 완전 삭제 완료 - 자소서 ID: {}, 평가 ID: {}", resumeId, id);
+                } else {
+                    // resume_id가 NULL인 경우 해당 평가만 삭제
+                    resumeEvalRepository.delete(resumeEval);
+                    log.info("자소서 평가 완전 삭제 완료 (자소서 삭제됨) - 평가 ID: {}", id);
+                }
                 return ResponseEntity.ok().build();
             }
             
@@ -1446,12 +1476,9 @@ public class UserController {
                 return ResponseEntity.status(403).build();
             }
             
-            // 먼저 resume_eval 테이블의 관련 데이터 삭제
-            resumeEvalRepository.deleteAllVersionsByResumeId(id);
-            log.info("자기소개서 평가 데이터 삭제 완료 - 자기소개서 ID: {}", id);
-            
-            // 그 다음 resume 테이블에서 삭제
+            // resume 테이블에서 삭제 (외래키 제약조건에 의해 resume_eval의 resume_id는 자동으로 NULL로 설정됨)
             resumeRepository.delete(resume);
+            log.info("자기소개서 삭제 완료 - 관련 평가의 resume_id는 NULL로 설정됨");
             
             log.info("자기소개서 완전 삭제 완료 - 자기소개서 ID: {}", id);
             return ResponseEntity.ok().build();
@@ -1519,7 +1546,7 @@ public class UserController {
      * @return 성공 여부
      */
     @PutMapping("/evaluations/{id}/title")
-    public ResponseEntity<Map<String, Object>> updateEvaluationTitle(@PathVariable Integer id, @RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> updateEvaluationTitle(@PathVariable Integer id, @RequestBody Map<String, String> request, @RequestParam(required = false) String type) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         
@@ -1528,9 +1555,62 @@ public class UserController {
             return ResponseEntity.badRequest().build();
         }
         
-        log.info("평가 타이틀 수정 요청 - 사용자: {}, 평가 ID: {}, 새 타이틀: {}", email, id, newTitle);
+        log.info("평가 타이틀 수정 요청 - 사용자: {}, 평가 ID: {}, 새 타이틀: {}, 타입: {}", email, id, newTitle, type);
         
         try {
+            // 타입이 명시적으로 지정된 경우 해당 타입에서만 조회
+            if ("resume".equals(type)) {
+                Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
+                if (resumeEvalOpt.isPresent()) {
+                    ResumeEval resumeEval = resumeEvalOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!resumeEval.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 자소서 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    // 자소서 평가의 경우 ResumeEval 테이블의 resume_eval_title 수정
+                    resumeEval.setResumeEvalTitle(newTitle.trim());
+                    resumeEvalRepository.save(resumeEval);
+                    
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("message", "자소서 평가 타이틀이 수정되었습니다.");
+                    response.put("newTitle", newTitle.trim());
+                    
+                    log.info("자소서 평가 타이틀 수정 완료 - 평가 ID: {}", id);
+                    return ResponseEntity.ok(response);
+                }
+                return ResponseEntity.notFound().build();
+            } else if ("interview".equals(type)) {
+                Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
+                if (archiveOpt.isPresent()) {
+                    InterviewArchive archive = archiveOpt.get();
+                    
+                    // 사용자 본인의 평가인지 확인
+                    if (!archive.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    // 면접 평가 타이틀 수정
+                    archive.setArchive_name(newTitle.trim());
+                    archive.setUpdatedAt(java.time.LocalDateTime.now());
+                    interviewArchiveRepository.save(archive);
+                    
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("message", "면접 평가 타이틀이 수정되었습니다.");
+                    response.put("newTitle", newTitle.trim());
+                    
+                    log.info("면접 평가 타이틀 수정 완료 - 평가 ID: {}", id);
+                    return ResponseEntity.ok(response);
+                }
+                return ResponseEntity.notFound().build();
+            }
+            
+            // 타입이 지정되지 않은 경우 기존 로직 (하위 호환성)
             // 먼저 면접 평가에서 조회
             Optional<InterviewArchive> archiveOpt = interviewArchiveRepository.findById(id);
             if (archiveOpt.isPresent()) {
@@ -1567,11 +1647,9 @@ public class UserController {
                     return ResponseEntity.status(403).build();
                 }
                 
-                // 자소서 평가의 경우 Resume 테이블의 resume_title 수정
-                Resume resume = resumeEval.getResume();
-                resume.setResumeTitle(newTitle.trim());
-                resume.setUpdatedAt(java.time.LocalDateTime.now());
-                resumeRepository.save(resume);
+                // 자소서 평가의 경우 ResumeEval 테이블의 resume_eval_title 수정
+                resumeEval.setResumeEvalTitle(newTitle.trim());
+                resumeEvalRepository.save(resumeEval);
                 
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", true);

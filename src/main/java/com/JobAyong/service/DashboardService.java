@@ -23,12 +23,15 @@ public class DashboardService {
     public Map<String, List<DashboardResponse>> getStats() {
         Map<String, List<DashboardResponse>> result = new LinkedHashMap<>();
 
+        LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
+
         result.put("user", List.of(
-                new DashboardResponse("총 사용자 수", userRepository.count(), "👥")
+                new DashboardResponse("총 사용자 수", userRepository.count(), "👥"),
+                new DashboardResponse("이번 주 신규 가입자", userRepository.countByCreatedAtAfterAndDeletedAtIsNull(weekAgo), "✨")
         ));
 
         result.put("interview", List.of(
-                new DashboardResponse("이번 주 면접 수", interviewArchiveRepository.countByCreatedAtAfterAndDeletedAtIsNull(LocalDateTime.now().minusDays(7)), "🎤")
+                new DashboardResponse("이번 주 면접 수", interviewArchiveRepository.countByCreatedAtAfterAndDeletedAtIsNull(weekAgo), "🎤")
         ));
 
         result.put("ticket", List.of(

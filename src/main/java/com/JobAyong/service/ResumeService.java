@@ -134,6 +134,15 @@ public class ResumeService {
         ResumeEval eval = new ResumeEval();
         eval.setResume(resume);
         eval.setUser(user);
+        
+        // 평가 제목 처리: 프론트엔드에서 온 제목이 비어있거나 " 평가"만 있으면 Resume 제목 사용
+        String evalTitle = dto.getResumeEvalTitle();
+        if (evalTitle == null || evalTitle.trim().isEmpty() || evalTitle.equals(" 평가") || evalTitle.equals("평가")) {
+            evalTitle = resume.getResumeTitle() + " 평가";
+            System.out.println("⚠️ 프론트엔드 제목이 비어있음, Resume 제목 사용: \"" + evalTitle + "\"");
+        }
+        eval.setResumeEvalTitle(evalTitle);
+        
         eval.setResumeOrg(dto.getResumeOrg());
         eval.setResumeImp(dto.getResumeImp());
         eval.setReason(dto.getReason());
@@ -149,6 +158,7 @@ public class ResumeService {
         dto.setResumeEvalId(eval.getResumeEvalId());
         dto.setResumeId(eval.getResume().getResumeId());
         dto.setUserEmail(eval.getUser().getEmail());
+        dto.setResumeEvalTitle(eval.getResumeEvalTitle());
         dto.setResumeOrg(eval.getResumeOrg());
         dto.setResumeImp(eval.getResumeImp());
         dto.setReason(eval.getReason());

@@ -17,12 +17,15 @@ public class ResumeEval {
     private Integer resumeEvalId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resume_id", nullable = false)
+    @JoinColumn(name = "resume_id", nullable = true)
     private Resume resume;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "email", nullable = false)
     private User user;
+
+    @Column(name = "resume_eval_title")
+    private String resumeEvalTitle;
 
     @Column(name = "resume_org", nullable = false, columnDefinition = "TEXT")
     private String resumeOrg;

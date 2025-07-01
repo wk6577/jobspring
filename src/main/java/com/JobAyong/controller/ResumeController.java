@@ -134,17 +134,41 @@ public class ResumeController {
      */
     @PostMapping("/eval")
     public ResponseEntity<ResumeEvalResponse> createResumeEval(@RequestBody ResumeEvalRequest request) {
+        System.out.println("=== 자소서 평가 생성 API 호출 ===");
+        System.out.println("요청 데이터:");
+        System.out.println("resumeId: " + request.getResumeId());
+        System.out.println("resumeEvalTitle: \"" + request.getResumeEvalTitle() + "\"");
+        System.out.println("resumeEvalTitle 타입: " + (request.getResumeEvalTitle() != null ? request.getResumeEvalTitle().getClass().getSimpleName() : "null"));
+        System.out.println("resumeEvalTitle 길이: " + (request.getResumeEvalTitle() != null ? request.getResumeEvalTitle().length() : "null"));
+        System.out.println("resumeEvalVersion: " + request.getResumeEvalVersion());
+        
         // Authentication에서 사용자 정보 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
+        System.out.println("사용자 이메일: " + userEmail);
         
         // User, Resume 조회
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Resume resume = resumeService.findByResumeId(request.getResumeId())
                 .orElseThrow(() -> new RuntimeException("Resume not found"));
+        
+        System.out.println("Resume 정보:");
+        System.out.println("resumeId: " + resume.getResumeId());
+        System.out.println("resumeTitle: \"" + resume.getResumeTitle() + "\"");
+        
         ResumeEval eval = resumeService.toResumeEvalEntity(request, resume, user);
+        
+        System.out.println("생성된 ResumeEval 엔티티:");
+        System.out.println("resumeEvalTitle: \"" + eval.getResumeEvalTitle() + "\"");
+        
         ResumeEval saved = resumeService.save(eval);
+        
+        System.out.println("저장된 ResumeEval:");
+        System.out.println("resumeEvalId: " + saved.getResumeEvalId());
+        System.out.println("resumeEvalTitle: \"" + saved.getResumeEvalTitle() + "\"");
+        System.out.println("=== 자소서 평가 생성 완료 ===");
+        
         ResumeEvalResponse response = resumeService.toResumeEvalResponse(saved);
         return ResponseEntity.ok(response);
     }
