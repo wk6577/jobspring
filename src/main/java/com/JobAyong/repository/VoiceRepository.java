@@ -10,4 +10,7 @@ import java.util.List;
 public interface VoiceRepository extends JpaRepository<Voice, Integer> {
     List<Voice> findByUser(User user);
     List<Voice> findByUserEmail(String email);
+    List<Voice> findByUserEmailOrderByCreatedAtDesc(String email);
+    List<Voice> findByUserEmailAndDeletedAtIsNull(String email);
+    List<Voice> findByUserEmailAndDeletedAtIsNullOrderByCreatedAtDesc(String email);
 } 

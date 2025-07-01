@@ -21,6 +21,8 @@ public class VoiceEval {
     @JoinColumn(name = "voice_id", nullable = false)
     private Voice voice;
 
+    @Column(name = "voice_id", insertable = false, updatable = false)
+    private Integer voiceId;
 
     @Lob
     @Column(columnDefinition = "LONGTEXT")
