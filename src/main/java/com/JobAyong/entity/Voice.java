@@ -1,15 +1,31 @@
 package com.JobAyong.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "voice")
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Voice {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Voice)) return false;
+        Voice v = (Voice) o;
+        return Objects.equals(this.voiceId, v.voiceId);
+    }
+    @Override
+    public int hashCode() {
+        return Objects.hash(voiceId);
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "voice_id")
@@ -30,6 +46,12 @@ public class Voice {
 
     @Column(name = "file_path", length = 500)
     private String filePath;
+
+    @Column(name = "converted_file_path", length = 500)
+    private String convertedFilePath;
+
+    @Column(name = "transcript_text", length = 500)
+    private String transcriptText;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

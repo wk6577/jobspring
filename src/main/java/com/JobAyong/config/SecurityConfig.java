@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/**").authenticated()
                         .requestMatchers("/api/interview/**").authenticated()
                         .requestMatchers("/api/dashboard").authenticated()
+                        .requestMatchers("/api/voices").authenticated()
 //                        .requestMatchers("/api/dashboard").hasRole("ADMIN")
                         .requestMatchers("/api/interview-archives", "/api/interview-archives/**").permitAll()
                         .anyRequest().authenticated()

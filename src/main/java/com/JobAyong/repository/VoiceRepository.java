@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface VoiceRepository extends JpaRepository<Voice, Long> {
+public interface VoiceRepository extends JpaRepository<Voice, Integer> {
     List<Voice> findByUser(User user);
     List<Voice> findByUserEmail(String email);
 } 
