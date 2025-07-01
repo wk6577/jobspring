@@ -23,6 +23,7 @@ public class VoiceEval {
 
 
     @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String transcript;
 
     private int overallScore;
