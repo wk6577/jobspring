@@ -90,17 +90,21 @@ CREATE TABLE `resume` (
 
 -- voice 테이블
 CREATE TABLE `voice` (
-    `voice_id` INT AUTO_INCREMENT NOT NULL,
-    `email` VARCHAR(255) NOT NULL,
-    `file_name` VARCHAR(255) NULL,
-    `file_type` VARCHAR(50) NULL,
-    `file_size` INT NULL,
-    `file_path` VARCHAR(500) NULL,
-    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `deleted_at` TIMESTAMP NULL,
+    `voice_id` INT AUTO_INCREMENT NOT NULL COMMENT '음성 파일 식별 ID',
+    `email` VARCHAR(255) NOT NULL COMMENT '사용자 이메일 (user 테이블 참조)',
+    `file_name` VARCHAR(255) NULL COMMENT '업로드된 원본 파일명 (예: uploaded.webm)',
+    `file_type` VARCHAR(50) NULL COMMENT '파일 확장자 (webm, mp3 등)',
+    `file_size` INT NULL COMMENT '파일 용량 (바이트 단위)',
+    `file_path` VARCHAR(500) NULL COMMENT '원본 파일의 저장 경로',
+    `converted_file_path` VARCHAR(255) NULL COMMENT 'wav로 변환된 파일 경로',
+    `transcript_text` VARCHAR(500) NULL COMMENT 'Whisper로 추출된 음성 텍스트 요약',
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '업로드 시각',
+    `deleted_at` TIMESTAMP NULL COMMENT '삭제 일시 (소프트 삭제용)',
+
     PRIMARY KEY (`voice_id`),
     FOREIGN KEY (`email`) REFERENCES `user` (`email`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 -- interview_archive 테이블
 CREATE TABLE `interview_archive` (
@@ -168,17 +172,37 @@ CREATE TABLE `interview_eval` (
 
 -- voice_eval 테이블
 CREATE TABLE `voice_eval` (
-    `voice_eval_id` INT AUTO_INCREMENT NOT NULL,
-    `voice_id` INT NOT NULL,
-    `email` VARCHAR(255) NOT NULL,
-    `voice_eval_comment` TEXT NULL,
-    `voice_eval_score` INT NULL,
-    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `deleted_at` TIMESTAMP NULL,
-    PRIMARY KEY (`voice_eval_id`),
-    FOREIGN KEY (`voice_id`) REFERENCES `voice` (`voice_id`),
-    FOREIGN KEY (`email`) REFERENCES `user` (`email`)
-);
+  `eval_id`              INT AUTO_INCREMENT COMMENT '음성 평가 결과 ID',
+  `voice_id`             INT NOT NULL COMMENT 'voice 테이블의 외래키',
+
+  `transcript`           LONGTEXT COMMENT 'Whisper로 추출한 텍스트',
+  `overall_score`        INT COMMENT '전체 종합 점수 (10~100)',
+  `clarity_score`        INT COMMENT '명료도 점수',
+  `speed_score`          INT COMMENT '속도 점수',
+  `volume_score`         INT COMMENT '볼륨 점수',
+  `confidence_score`     INT COMMENT '자신감 점수 (overall_score와 동일)',
+
+  `words_per_minute`     INT COMMENT '분당 단어 수',
+  `pause_duration`       FLOAT COMMENT '평균 멈춤 시간 (초)',
+  `intonation`           INT COMMENT '억양 변화 점수',
+  `pronunciation`        INT COMMENT '발음 정확도 점수',
+  `fillers_count`        INT COMMENT '간투사(음, 어 등) 사용 횟수',
+
+  `metric_grades_json`   JSON COMMENT '각 지표별 등급 및 짧은 코멘트 (clarity, speed 등)',
+  `voice_patterns_json`  JSON COMMENT '음성 패턴 분석 결과 (볼륨, 속도, 톤)',
+  `strengths_json`       JSON COMMENT '강점 리스트 [{title, description}]',
+  `improvements_json`    JSON COMMENT '개선점 리스트 [{title, description}]',
+  `strategies_json`      JSON COMMENT '개선 전략 리스트 [{title, description}]',
+
+  `interviewer_comment`  TEXT COMMENT '면접관 관점 종합 코멘트',
+  `created_at`           DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '분석 저장 시각',
+  `deleted_at`           DATETIME DEFAULT NULL COMMENT '소프트 삭제 일시',
+
+  PRIMARY KEY (`eval_id`),
+  FOREIGN KEY (`voice_id`) REFERENCES `voice`(`voice_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 
 -- resume_eval 테이블
 CREATE TABLE `resume_eval` (
