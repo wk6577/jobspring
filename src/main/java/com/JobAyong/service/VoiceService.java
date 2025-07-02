@@ -112,29 +112,35 @@ public class VoiceService {
     public Resource getAudioFile(int voiceId) {
         try {
             log.info("음성 파일 요청 - voiceId: {}", voiceId);
-            
+
             Voice voice = voiceRepository.findById(voiceId)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 음성 ID: " + voiceId));
-            
-            log.info("음성 파일 정보 조회 성공 - filePath: {}", voice.getConvertedFilePath());
 
-            // 상대 경로를 절대 경로로 변환
-            String relativePath = voice.getConvertedFilePath().replace("\\", "/");
-            if (relativePath.startsWith("/")) {
-                relativePath = relativePath.substring(1);
+            String rawPath = voice.getConvertedFilePath().replace("\\", "/");
+            log.info("음성 파일 정보 조회 성공 - filePath: {}", rawPath);
+
+            Path absolutePath;
+
+            // 절대 경로인지 확인
+            if (Paths.get(rawPath).isAbsolute()) {
+                absolutePath = Paths.get(rawPath);
+            } else {
+                if (rawPath.startsWith("/")) {
+                    rawPath = rawPath.substring(1);
+                }
+                absolutePath = Paths.get(uploadDir, rawPath);
             }
-            
-            Path absolutePath = Paths.get(uploadDir, relativePath);
+
             File file = absolutePath.toFile();
-            
+
             log.info("변환된 절대 경로: {}", absolutePath);
             log.info("파일 존재 여부: {}", file.exists());
-            
+
             if (!file.exists()) {
                 log.error("음성 파일을 찾을 수 없음 - 경로: {}", absolutePath);
                 throw new IllegalStateException("음성 파일을 찾을 수 없습니다: " + absolutePath);
             }
-            
+
             if (!file.canRead()) {
                 log.error("음성 파일 읽기 권한 없음 - 경로: {}", absolutePath);
                 throw new IllegalStateException("음성 파일에 대한 읽기 권한이 없습니다: " + absolutePath);
