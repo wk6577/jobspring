@@ -149,6 +149,9 @@ public class VoiceArchiveService {
         log.info("음성 평가 완전 삭제 시작. 음성 ID: {}, 사용자: {}", voiceId, email);
         
         Voice voice = voiceRepository.findById(voiceId)
+                .orElseThrow(() -> new RuntimeException("음성 파일을 찾을 수 없습니다."));
+
+        VoiceEval voiceEval = voiceEvalRepository.findByVoiceId(voice.getVoiceId())
                 .orElseThrow(() -> new RuntimeException("음성 평가를 찾을 수 없습니다."));
                 
         if (!voice.getUser().getEmail().equals(email)) {
@@ -156,6 +159,7 @@ public class VoiceArchiveService {
         }
         
         // 완전 삭제 처리
+        voiceEvalRepository.delete(voiceEval);
         voiceRepository.delete(voice);
         
         log.info("음성 평가 완전 삭제 완료. 음성 ID: {}", voiceId);
