@@ -25,6 +25,9 @@ public class VoiceArchiveResponse {
     private Integer confidenceScore;
     private Integer wordsPerMinute;
     private Float pauseDuration;
+    private Integer intonation;
+    private Integer pronunciation;
+    private Integer fillersCount;
     private String metricGradesJson;
     private String voicePatternsJson;
     private String strengthsJson;
@@ -47,6 +50,9 @@ public class VoiceArchiveResponse {
                 .confidenceScore(eval != null ? eval.getConfidenceScore() : null)
                 .wordsPerMinute(eval != null ? eval.getWordsPerMinute() : null)
                 .pauseDuration(eval != null ? eval.getPauseDuration() : null)
+                .intonation(eval != null ? eval.getIntonation() : null)
+                .pronunciation(eval != null ? eval.getPronunciation() : null)
+                .fillersCount(eval != null ? eval.getFillersCount() : null)
                 .metricGradesJson(eval != null ? eval.getMetricGradesJson() : null)
                 .voicePatternsJson(eval != null ? eval.getVoicePatternsJson() : null)
                 .strengthsJson(eval != null ? eval.getStrengthsJson() : null)
