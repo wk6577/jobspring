@@ -2,6 +2,7 @@ package com.JobAyong.service;
 
 import com.JobAyong.constant.InterviewQuestionType;
 import com.JobAyong.constant.InterviewStatus;
+import com.JobAyong.constant.UserStatus;
 import com.JobAyong.dto.CreateNewInterviewArchiveRequest;
 import com.JobAyong.dto.CreateNewInterviewQuestionAndEvalRequest;
 import com.JobAyong.dto.GetPrevImprovementRequest;
@@ -100,11 +101,16 @@ public class InterviewService {
         String email = authentication.getName();
         User user = userService.whoareyou(email); // 예외 발생 가능(나중에 토큰 인증기능으로 대체)
 
+        // 사용자 상태 체크
+        if (UserStatus.SUSPENDED.equals(user.getStatus())) {
+            throw new RuntimeException("정지된 사용자는 면접평가를 이용할 수 없습니다.");
+        }
+
         CreateNewInterviewQuestionAndEvalRequest.EvaluationDTO result_of_eval = request.getEvaluation();
         Integer interviewArchiveId = request.getInterviewArchiveId();
         List<String> answerList = request.getAnswers();
 
-        InterviewArchive interviewArchive = interviewArchiveRepository.findById(interviewArchiveId).orElseThrow(() -> new RuntimeException("유효하지 않은 아키이브 아이디 입니다.")); // 예외 발생 가능
+        InterviewArchive interviewArchive = interviewArchiveRepository.findById(interviewArchiveId).orElseThrow(() -> new RuntimeException("유효하지 않은 아키이브 아이디 입니다."));
         List<InterviewQuestion> interviewQuestions = interviewQuestionRepository.findAllByInterviewArchive(interviewArchive);
 
         List<InterviewAnswer> interviewAnswerList = new ArrayList<>();
