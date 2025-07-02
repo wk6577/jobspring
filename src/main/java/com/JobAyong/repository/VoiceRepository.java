@@ -13,4 +13,5 @@ public interface VoiceRepository extends JpaRepository<Voice, Integer> {
     List<Voice> findByUserEmailOrderByCreatedAtDesc(String email);
     List<Voice> findByUserEmailAndDeletedAtIsNull(String email);
     List<Voice> findByUserEmailAndDeletedAtIsNullOrderByCreatedAtDesc(String email);
+    List<Voice> findByUserEmailAndDeletedAtIsNotNullOrderByDeletedAtDesc(String email);
 } 

@@ -95,4 +95,69 @@ public class VoiceArchiveService {
         
         log.info("음성 평가 삭제 완료. 음성 ID: {}", voiceId);
     }
+
+    @Transactional(readOnly = true)
+    public List<VoiceArchiveResponse> getDeletedVoiceArchives() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        
+        log.info("음성 평가 휴지통 목록 조회 시작. 사용자: {}", email);
+        
+        // 삭제된 음성 데이터만 가져오고 삭제일 기준 최신순으로 정렬
+        List<Voice> voices = voiceRepository.findByUserEmailAndDeletedAtIsNotNullOrderByDeletedAtDesc(email);
+        
+        log.info("조회된 휴지통 음성 데이터 개수: {}", voices.size());
+        
+        return voices.stream()
+                .map(voice -> {
+                    log.debug("휴지통 음성 ID: {}, 파일명: {}", voice.getVoiceId(), voice.getFileName());
+                    
+                    VoiceEval eval = voiceEvalRepository.findByVoiceId(voice.getVoiceId())
+                            .orElse(null);
+                    
+                    return VoiceArchiveResponse.from(voice, eval);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void restoreVoiceArchive(int voiceId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        
+        log.info("음성 평가 복구 시작. 음성 ID: {}, 사용자: {}", voiceId, email);
+        
+        Voice voice = voiceRepository.findById(voiceId)
+                .orElseThrow(() -> new RuntimeException("음성 평가를 찾을 수 없습니다."));
+                
+        if (!voice.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("접근 권한이 없습니다.");
+        }
+        
+        // 복구 처리 (deleted_at을 null로 설정)
+        voice.setDeletedAt(null);
+        voiceRepository.save(voice);
+        
+        log.info("음성 평가 복구 완료. 음성 ID: {}", voiceId);
+    }
+
+    @Transactional
+    public void permanentlyDeleteVoiceArchive(int voiceId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        
+        log.info("음성 평가 완전 삭제 시작. 음성 ID: {}, 사용자: {}", voiceId, email);
+        
+        Voice voice = voiceRepository.findById(voiceId)
+                .orElseThrow(() -> new RuntimeException("음성 평가를 찾을 수 없습니다."));
+                
+        if (!voice.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("접근 권한이 없습니다.");
+        }
+        
+        // 완전 삭제 처리
+        voiceRepository.delete(voice);
+        
+        log.info("음성 평가 완전 삭제 완료. 음성 ID: {}", voiceId);
+    }
 } 

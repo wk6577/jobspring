@@ -15,6 +15,7 @@ public class VoiceArchiveResponse {
     private String fileName;
     private String transcriptText;
     private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
     
     // 평가 관련 필드
     private Integer overallScore;
@@ -38,6 +39,7 @@ public class VoiceArchiveResponse {
                 .fileName(voice.getFileName())
                 .transcriptText(voice.getTranscriptText())
                 .createdAt(voice.getCreatedAt())
+                .deletedAt(voice.getDeletedAt())
                 .overallScore(eval != null ? eval.getOverallScore() : null)
                 .clarityScore(eval != null ? eval.getClarityScore() : null)
                 .speedScore(eval != null ? eval.getSpeedScore() : null)
