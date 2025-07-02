@@ -11,8 +11,15 @@ import com.JobAyong.repository.VoiceRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Slf4j
 @Service
@@ -23,6 +30,9 @@ public class VoiceService {
     private final VoiceRepository voiceRepository;
     private final VoiceEvalRepository voiceEvalRepository;
     private final UserRepository userRepository;
+
+    @Value("${app.upload.dir:${user.dir}/jobAPI/api/data}")
+    private String uploadDir;
 
     @Transactional
     public int addVoice(CreateVoiceRequest request){
@@ -91,6 +101,49 @@ public class VoiceService {
 
         } catch (Exception e) {
             throw new RuntimeException("음성 평가 저장 중 오류 발생", e);
+        }
+    }
+
+    /**
+     * 음성 파일 가져오기
+     * @param voiceId 음성 ID
+     * @return 음성 파일 Resource
+     */
+    public Resource getAudioFile(int voiceId) {
+        try {
+            log.info("음성 파일 요청 - voiceId: {}", voiceId);
+            
+            Voice voice = voiceRepository.findById(voiceId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 음성 ID: " + voiceId));
+            
+            log.info("음성 파일 정보 조회 성공 - filePath: {}", voice.getConvertedFilePath());
+
+            // 상대 경로를 절대 경로로 변환
+            String relativePath = voice.getConvertedFilePath().replace("\\", "/");
+            if (relativePath.startsWith("/")) {
+                relativePath = relativePath.substring(1);
+            }
+            
+            Path absolutePath = Paths.get(uploadDir, relativePath);
+            File file = absolutePath.toFile();
+            
+            log.info("변환된 절대 경로: {}", absolutePath);
+            log.info("파일 존재 여부: {}", file.exists());
+            
+            if (!file.exists()) {
+                log.error("음성 파일을 찾을 수 없음 - 경로: {}", absolutePath);
+                throw new IllegalStateException("음성 파일을 찾을 수 없습니다: " + absolutePath);
+            }
+            
+            if (!file.canRead()) {
+                log.error("음성 파일 읽기 권한 없음 - 경로: {}", absolutePath);
+                throw new IllegalStateException("음성 파일에 대한 읽기 권한이 없습니다: " + absolutePath);
+            }
+
+            return new FileSystemResource(file);
+        } catch (Exception e) {
+            log.error("음성 파일 가져오기 실패", e);
+            throw e;
         }
     }
 }
