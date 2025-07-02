@@ -32,6 +32,7 @@ public class UserController {
     private final ResumeRepository resumeRepository;
     private final ResumeEvalRepository resumeEvalRepository;
     private final UserRepository userRepository;
+    private final VoiceRepository voiceRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> signUp(@RequestBody UserSignUpRequest request) {
@@ -1559,7 +1560,31 @@ public class UserController {
         
         try {
             // 타입이 명시적으로 지정된 경우 해당 타입에서만 조회
-            if ("resume".equals(type)) {
+            if ("voice".equals(type)) {
+                Optional<Voice> voiceOpt = voiceRepository.findById(id);
+                if (voiceOpt.isPresent()) {
+                    Voice voice = voiceOpt.get();
+                    
+                    // 사용자 본인의 음성 평가인지 확인
+                    if (!voice.getUser().getEmail().equals(email)) {
+                        log.warn("권한 없음: 사용자({})가 다른 사용자의 음성 평가({})에 접근 시도", email, id);
+                        return ResponseEntity.status(403).build();
+                    }
+                    
+                    // 음성 평가의 경우 Voice 테이블의 file_name 수정
+                    voice.setFileName(newTitle.trim());
+                    voiceRepository.save(voice);
+                    
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("message", "음성 평가 제목이 수정되었습니다.");
+                    response.put("newTitle", newTitle.trim());
+                    
+                    log.info("음성 평가 제목 수정 완료 - 평가 ID: {}", id);
+                    return ResponseEntity.ok(response);
+                }
+                return ResponseEntity.notFound().build();
+            } else if ("resume".equals(type)) {
                 Optional<ResumeEval> resumeEvalOpt = resumeEvalRepository.findById(id);
                 if (resumeEvalOpt.isPresent()) {
                     ResumeEval resumeEval = resumeEvalOpt.get();
