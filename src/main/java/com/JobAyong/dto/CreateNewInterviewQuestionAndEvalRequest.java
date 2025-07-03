@@ -1,6 +1,4 @@
 package com.JobAyong.dto;
-
-import com.JobAyong.constant.InterviewQuestionType;
 import lombok.Data;
 
 import java.util.List;

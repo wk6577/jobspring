@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -302,8 +302,24 @@ public class ResumeService {
     // DOCX에서 텍스트 추출
     private String extractTextFromDocx(InputStream inputStream) throws IOException {
         try (XWPFDocument document = new XWPFDocument(inputStream)) {
-            XWPFWordExtractor extractor = new XWPFWordExtractor(document);
-            return extractor.getText();
+            StringBuilder text = new StringBuilder();
+            
+            // 문서의 모든 단락에서 텍스트 추출
+            document.getParagraphs().forEach(paragraph -> {
+                text.append(paragraph.getText()).append("\n");
+            });
+            
+            // 문서의 모든 테이블에서 텍스트 추출
+            document.getTables().forEach(table -> {
+                table.getRows().forEach(row -> {
+                    row.getTableCells().forEach(cell -> {
+                        text.append(cell.getText()).append(" ");
+                    });
+                    text.append("\n");
+                });
+            });
+            
+            return text.toString().trim();
         }
     }
 

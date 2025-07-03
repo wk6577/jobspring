@@ -147,7 +147,7 @@ public class CompanyController {
             return ResponseEntity.notFound().build();
         }
 
-        Boolean res = companyService.status(companyId, deactivate);
+        companyService.status(companyId, deactivate);
         return ResponseEntity.ok().build();
     }
 }

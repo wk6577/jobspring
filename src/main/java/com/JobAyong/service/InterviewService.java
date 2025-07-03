@@ -35,7 +35,6 @@ public class InterviewService {
     private final InterviewAnswerRepository interviewAnswerRepository;
     private final InterviewEvalRepository interviewEvalRepository;
     private final UserService userService;
-    private final CompanyService companyService ;
 
     /*@apiNote 질문 모드 ENUM 세팅해주는 함수
     * @author 나세호

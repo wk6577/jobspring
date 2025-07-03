@@ -1,8 +1,6 @@
 package com.JobAyong.dto;
 
 import lombok.Data;
-import java.util.Map;
-import java.util.List;
 
 @Data
 public class CreateVoiceRequest {

@@ -3,11 +3,9 @@ package com.JobAyong.service;
 import com.JobAyong.dto.InterviewArchiveResponse;
 import com.JobAyong.entity.InterviewArchive;
 import com.JobAyong.entity.InterviewQuestion;
-import com.JobAyong.entity.InterviewAnswer;
 import com.JobAyong.entity.User;
 import com.JobAyong.repository.InterviewArchiveRepository;
 import com.JobAyong.repository.InterviewQuestionRepository;
-import com.JobAyong.repository.InterviewAnswerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
@@ -28,7 +26,6 @@ public class InterviewArchiveService {
 
     private final InterviewArchiveRepository interviewArchiveRepository;
     private final InterviewQuestionRepository interviewQuestionRepository;
-    private final InterviewAnswerRepository interviewAnswerRepository;
     private final UserService userService;
 
     @Transactional(readOnly = true)
