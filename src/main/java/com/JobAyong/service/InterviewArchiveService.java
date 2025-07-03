@@ -30,7 +30,7 @@ public class InterviewArchiveService {
 
     @Transactional(readOnly = true)
     public List<InterviewArchiveResponse> getAllInterviewArchives(String email) {
-        List<InterviewArchive> archives = interviewArchiveRepository.findByUserEmailAndDeletedAtIsNullAndStatus(email, InterviewStatus.DONE);
+        List<InterviewArchive> archives = interviewArchiveRepository.findByUserEmailAndDeletedAtIsNullAndStatusWithEval(email, InterviewStatus.DONE);
         return archives.stream()
                 .map(InterviewArchiveResponse::fromEntity)
                 .collect(Collectors.toList());

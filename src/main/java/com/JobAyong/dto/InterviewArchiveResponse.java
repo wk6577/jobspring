@@ -19,8 +19,14 @@ public class InterviewArchiveResponse {
     private String position;
     private InterviewStatus status;
     private LocalDateTime createdAt;
+    private Integer evalScore;
 
     public static InterviewArchiveResponse fromEntity(InterviewArchive entity) {
+        Integer evalScore = null;
+        if (entity.getInterviewEval() != null) {
+            evalScore = entity.getInterviewEval().getEval_score();
+        }
+
         return InterviewArchiveResponse.builder()
                 .interviewArchiveId(entity.getInterviewArchiveId())
                 .email(entity.getUser().getEmail())
@@ -30,6 +36,7 @@ public class InterviewArchiveResponse {
                 .position(entity.getPosition())
                 .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt())
+                .evalScore(evalScore)
                 .build();
     }
 }
