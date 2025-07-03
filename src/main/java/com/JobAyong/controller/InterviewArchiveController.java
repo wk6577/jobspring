@@ -3,8 +3,10 @@ package com.JobAyong.controller;
 import com.JobAyong.dto.InterviewArchiveResponse;
 import com.JobAyong.service.InterviewArchiveService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -17,8 +19,10 @@ public class InterviewArchiveController {
     private final InterviewArchiveService interviewArchiveService;
 
     @GetMapping
-    public List<InterviewArchiveResponse> getAllArchives() {
-        return interviewArchiveService.getAllArchives();
+    public ResponseEntity<?> getAllArchives() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        return ResponseEntity.ok(interviewArchiveService.getAllInterviewArchives(email));
     }
 
     @DeleteMapping("/{id}")

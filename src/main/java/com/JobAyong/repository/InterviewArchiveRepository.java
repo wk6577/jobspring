@@ -20,6 +20,7 @@ public interface InterviewArchiveRepository extends JpaRepository<InterviewArchi
     // 휴지통 기능을 위한 메서드들
     List<InterviewArchive> findByUserEmailAndDeletedAtIsNull(String email); // 삭제되지 않은 것만
     List<InterviewArchive> findByUserEmailAndDeletedAtIsNotNull(String email); // 삭제된 것만 (휴지통)
+    List<InterviewArchive> findByUserEmailAndDeletedAtIsNullAndStatus(String email, InterviewStatus status);
 
     int countByCreatedAtAfterAndDeletedAtIsNull(LocalDateTime dateTime);
 } 

@@ -12,12 +12,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+
+import com.JobAyong.constant.InterviewStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,11 @@ public class InterviewArchiveService {
     private final InterviewQuestionRepository interviewQuestionRepository;
     private final InterviewAnswerRepository interviewAnswerRepository;
     private final UserService userService;
+
+    @Transactional(readOnly = true)
+    public List<InterviewArchive> getAllInterviewArchives(String email) {
+        return interviewArchiveRepository.findByUserEmailAndDeletedAtIsNullAndStatus(email, InterviewStatus.DONE);
+    }
 
     public List<InterviewArchiveResponse> getAllArchives() {
         // 현재 로그인한 사용자의 면접 아카이브만 가져오기
