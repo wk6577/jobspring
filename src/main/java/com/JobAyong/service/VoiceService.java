@@ -12,14 +12,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 
 @Slf4j
 @Service
@@ -37,10 +39,30 @@ public class VoiceService {
     @Transactional
     public int addVoice(CreateVoiceRequest request){
         try {
-
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자 이메일: " + request.getEmail()));
 
+            // base64 데이터를 바이너리로 디코딩
+            byte[] wavData = null;
+            if (request.getWavBinaryBase64() != null && !request.getWavBinaryBase64().isEmpty()) {
+                try {
+                    wavData = Base64.getDecoder().decode(request.getWavBinaryBase64());
+                    log.info("base64 WAV 데이터를 바이너리로 디코딩 완료 - 크기: {} bytes", wavData.length);
+                } catch (IllegalArgumentException e) {
+                    log.error("base64 디코딩 실패: {}", e.getMessage());
+                }
+            } else if (request.getConvertedFilePath() != null) {
+                // 기존 파일 경로 방식 호환성 유지
+                try {
+                    Path wavPath = Paths.get(request.getConvertedFilePath());
+                    if (Files.exists(wavPath)) {
+                        wavData = Files.readAllBytes(wavPath);
+                        log.info("WAV 파일을 바이너리로 읽어옴 - 크기: {} bytes", wavData.length);
+                    }
+                } catch (IOException e) {
+                    log.error("WAV 파일 읽기 실패: {}", e.getMessage());
+                }
+            }
 
             Voice voice = Voice.builder()
                     .user(user)
@@ -49,12 +71,13 @@ public class VoiceService {
                     .fileSize(request.getFileSize())
                     .filePath(request.getFilePath())
                     .convertedFilePath(request.getConvertedFilePath())
+                    .wavData(wavData)
                     .transcriptText(request.getTranscript())
                     .build();
 
-
             voiceRepository.saveAndFlush(voice);
-            System.out.println("🎧 저장된 voiceId: " + voice.getVoiceId());
+            log.info("음성 데이터 DB 저장 완료 - voiceId: {}, wavData size: {} bytes", 
+                     voice.getVoiceId(), wavData != null ? wavData.length : 0);
 
             return voice.getVoiceId();
         } catch (Exception e) {
@@ -71,8 +94,8 @@ public class VoiceService {
             Voice voice = voiceRepository.findById(request.getVoiceId())
                     .orElseThrow(() -> new IllegalArgumentException("해당 voiceId 없음: " + request.getVoiceId()));
 
-            System.out.println("DEBUG voice: id=" + voice.getVoiceId() +
-                    ", user=" + (voice.getUser() == null ? "null" : voice.getUser().getEmail()));
+            log.info("DEBUG voice: id={}, user={}", voice.getVoiceId(), 
+                     voice.getUser() == null ? "null" : voice.getUser().getEmail());
 
             VoiceEval voiceEval = VoiceEval.builder()
                     .voice(voice)
@@ -105,7 +128,7 @@ public class VoiceService {
     }
 
     /**
-     * 음성 파일 가져오기
+     * 음성 파일 가져오기 (DB에서 바이너리 데이터 조회)
      * @param voiceId 음성 ID
      * @return 음성 파일 Resource
      */
@@ -116,37 +139,15 @@ public class VoiceService {
             Voice voice = voiceRepository.findById(voiceId)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 음성 ID: " + voiceId));
 
-            String rawPath = voice.getConvertedFilePath().replace("\\", "/");
-            log.info("음성 파일 정보 조회 성공 - filePath: {}", rawPath);
-
-            Path absolutePath;
-
-            // 절대 경로인지 확인
-            if (Paths.get(rawPath).isAbsolute()) {
-                absolutePath = Paths.get(rawPath);
-            } else {
-                if (rawPath.startsWith("/")) {
-                    rawPath = rawPath.substring(1);
-                }
-                absolutePath = Paths.get(uploadDir, rawPath);
+            if (voice.getWavData() == null || voice.getWavData().length == 0) {
+                log.error("음성 바이너리 데이터가 없음 - voiceId: {}", voiceId);
+                throw new IllegalStateException("음성 바이너리 데이터를 찾을 수 없습니다");
             }
 
-            File file = absolutePath.toFile();
+            log.info("음성 바이너리 데이터 조회 성공 - voiceId: {}, size: {} bytes", 
+                     voiceId, voice.getWavData().length);
 
-            log.info("변환된 절대 경로: {}", absolutePath);
-            log.info("파일 존재 여부: {}", file.exists());
-
-            if (!file.exists()) {
-                log.error("음성 파일을 찾을 수 없음 - 경로: {}", absolutePath);
-                throw new IllegalStateException("음성 파일을 찾을 수 없습니다: " + absolutePath);
-            }
-
-            if (!file.canRead()) {
-                log.error("음성 파일 읽기 권한 없음 - 경로: {}", absolutePath);
-                throw new IllegalStateException("음성 파일에 대한 읽기 권한이 없습니다: " + absolutePath);
-            }
-
-            return new FileSystemResource(file);
+            return new ByteArrayResource(voice.getWavData());
         } catch (Exception e) {
             log.error("음성 파일 가져오기 실패", e);
             throw e;

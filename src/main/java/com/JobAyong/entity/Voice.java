@@ -50,6 +50,10 @@ public class Voice {
     @Column(name = "converted_file_path", length = 500)
     private String convertedFilePath;
 
+    @Lob
+    @Column(name = "wav_data", columnDefinition = "LONGBLOB")
+    private byte[] wavData;
+
     @Column(name = "transcript_text", length = 500)
     private String transcriptText;
 

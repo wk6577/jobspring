@@ -97,6 +97,7 @@ CREATE TABLE `voice` (
     `file_size` INT NULL COMMENT '파일 용량 (바이트 단위)',
     `file_path` VARCHAR(500) NULL COMMENT '원본 파일의 저장 경로',
     `converted_file_path` VARCHAR(255) NULL COMMENT 'wav로 변환된 파일 경로',
+    `wav_data` LONGBLOB NULL COMMENT 'WAV 파일의 바이너리 데이터',
     `transcript_text` VARCHAR(500) NULL COMMENT 'Whisper로 추출된 음성 텍스트 요약',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '업로드 시각',
     `deleted_at` TIMESTAMP NULL COMMENT '삭제 일시 (소프트 삭제용)',
@@ -201,8 +202,6 @@ CREATE TABLE `voice_eval` (
   PRIMARY KEY (`eval_id`),
   FOREIGN KEY (`voice_id`) REFERENCES `voice`(`voice_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-
 
 -- resume_eval 테이블
 CREATE TABLE `resume_eval` (

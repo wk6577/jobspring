@@ -14,6 +14,7 @@ public class CreateVoiceRequest {
     private int fileSize;
     private String filePath;
     private String convertedFilePath;
+    private String wavBinaryBase64;  // base64로 인코딩된 WAV 바이너리 데이터
 
     private String transcript;
 }
