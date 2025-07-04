@@ -46,10 +46,22 @@ public class VoiceService {
             byte[] wavData = null;
             if (request.getWavBinaryBase64() != null && !request.getWavBinaryBase64().isEmpty()) {
                 try {
-                    wavData = Base64.getDecoder().decode(request.getWavBinaryBase64());
-                    log.info("base64 WAV 데이터를 바이너리로 디코딩 완료 - 크기: {} bytes", wavData.length);
+                    // base64 문자열에서 데이터 URL 접두사 제거 (예: "data:audio/wav;base64,")
+                    String base64Data = request.getWavBinaryBase64();
+                    if (base64Data.contains(",")) {
+                        base64Data = base64Data.split(",")[1];
+                        log.info("데이터 URL 접두사 제거됨, 순수 base64 길이: {}", base64Data.length());
+                    }
+                    
+                    wavData = Base64.getDecoder().decode(base64Data);
+                    log.info("base64 WAV 데이터 디코딩 성공 - 원본: {} chars → 바이너리: {} bytes", 
+                             request.getWavBinaryBase64().length(), wavData.length);
                 } catch (IllegalArgumentException e) {
-                    log.error("base64 디코딩 실패: {}", e.getMessage());
+                    log.error("base64 디코딩 실패: {}, 원본 데이터 길이: {}", e.getMessage(), request.getWavBinaryBase64().length());
+                    log.error("base64 데이터 샘플 (처음 100자): {}", 
+                             request.getWavBinaryBase64().substring(0, Math.min(100, request.getWavBinaryBase64().length())));
+                } catch (Exception e) {
+                    log.error("예상치 못한 디코딩 오류: {}", e.getMessage(), e);
                 }
             } else if (request.getConvertedFilePath() != null) {
                 // 기존 파일 경로 방식 호환성 유지
@@ -57,11 +69,16 @@ public class VoiceService {
                     Path wavPath = Paths.get(request.getConvertedFilePath());
                     if (Files.exists(wavPath)) {
                         wavData = Files.readAllBytes(wavPath);
-                        log.info("WAV 파일을 바이너리로 읽어옴 - 크기: {} bytes", wavData.length);
+                        log.info("WAV 파일을 바이너리로 읽어옴 - 파일 경로: {}, 크기: {} bytes", 
+                                request.getConvertedFilePath(), wavData.length);
+                    } else {
+                        log.warn("WAV 파일이 존재하지 않음: {}", request.getConvertedFilePath());
                     }
                 } catch (IOException e) {
-                    log.error("WAV 파일 읽기 실패: {}", e.getMessage());
+                    log.error("WAV 파일 읽기 실패: {}, 파일 경로: {}", e.getMessage(), request.getConvertedFilePath());
                 }
+            } else {
+                log.warn("WAV 바이너리 데이터와 파일 경로 모두 제공되지 않음");
             }
 
             Voice voice = Voice.builder()
@@ -75,13 +92,32 @@ public class VoiceService {
                     .transcriptText(request.getTranscript())
                     .build();
 
-            voiceRepository.saveAndFlush(voice);
-            log.info("음성 데이터 DB 저장 완료 - voiceId: {}, wavData size: {} bytes", 
-                     voice.getVoiceId(), wavData != null ? wavData.length : 0);
+            Voice savedVoice = voiceRepository.saveAndFlush(voice);
+            log.info("음성 데이터 DB 저장 완료 - voiceId: {}, 입력 wavData size: {} bytes", 
+                     savedVoice.getVoiceId(), wavData != null ? wavData.length : 0);
 
-            return voice.getVoiceId();
-        return savedVoice.getVoiceId();
-tional
+            // DB에서 다시 조회하여 실제 저장된 데이터 검증
+            Voice verifyVoice = voiceRepository.findById(savedVoice.getVoiceId()).orElse(null);
+            if (verifyVoice != null) {
+                if (verifyVoice.getWavData() != null && verifyVoice.getWavData().length > 0) {
+                    log.info("DB에서 음성 바이너리 데이터 저장 확인됨 - voiceId: {}, 실제 저장된 size: {} bytes", 
+                             verifyVoice.getVoiceId(), verifyVoice.getWavData().length);
+                } else {
+                    log.error("음성 바이너리 데이터가 DB에 저장되지 않음 - voiceId: {}", verifyVoice.getVoiceId());
+                    log.error("원본 요청 정보 - wavBinaryBase64 null 여부: {}, 파일 경로: {}", 
+                             request.getWavBinaryBase64() == null, request.getConvertedFilePath());
+                }
+            } else {
+                log.error("DB에서 저장된 Voice 엔티티 조회 실패 - voiceId: {}", savedVoice.getVoiceId());
+            }
+
+            return savedVoice.getVoiceId();
+        } catch (Exception e) {
+            throw new RuntimeException("음성 파일 저장 중 오류 발생", e);
+        }
+    }
+
+    @Transactional
     public Boolean addVoiceEval(CreateVoiceEvalRequest request){
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -130,7 +166,7 @@ tional
      */
     public Resource getAudioFile(int voiceId) {
         try {
-            log.info("음성 파일 요청 - voiceId: {}", voiceId);
+            log.info("🎧 음성 파일 요청 - voiceId: {}", voiceId);
 
             Voice voice = voiceRepository.findById(voiceId)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 음성 ID: " + voiceId));
