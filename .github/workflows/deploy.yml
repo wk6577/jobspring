@@ -20,7 +20,7 @@ jobs:
 
     - name: Deploy to OCI
       run: |
-      ssh -o StrictHostKeyChecking=no ubuntu@129.154.53.45 "
+    ssh -o StrictHostKeyChecking=no ubuntu@129.154.53.45 "
       cd ~/spring-project/jpbspring &&
       git pull &&
       mvn clean package &&
