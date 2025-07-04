@@ -39,6 +39,8 @@ SELECT * FROM `resume_eval`;
 -- report 테이블 조회
 SELECT * FROM `report`;
 
+SELECT * FROM `ticket`;
+
 -- 삭제되지 않은 데이터만 조회하는 쿼리 (deleted_at이 NULL인 데이터)
 SELECT * FROM `user` WHERE deleted_at IS NULL;
 SELECT * FROM `company` WHERE deleted_at IS NULL;
