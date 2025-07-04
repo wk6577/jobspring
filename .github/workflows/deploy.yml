@@ -1,0 +1,36 @@
+name: Deploy to OCI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SPRING_KEY }}
+
+    - name: Deploy to OCI
+      run: |
+      ssh -o StrictHostKeyChecking=no ubuntu@129.154.53.45 "
+      cd ~/spring-project/jpbspring &&
+      git pull &&
+      mvn clean package &&
+
+      # 포트 9000 사용 중인 프로세스 종료
+      PID=\$(lsof -t -i:9000) &&
+      if [ ! -z \"\$PID\" ]; then
+        kill -9 \$PID
+      fi &&
+
+      # 새 프로세스 실행
+      nohup java -jar target/JobAyong-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+    "
