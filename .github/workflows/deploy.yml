@@ -26,11 +26,11 @@ jobs:
             mvn clean package &&
 
             # 포트 9000 사용 중인 프로세스 종료
-            PID=\$(lsof -t -i:9000) &&
+            PID=\$(lsof -t -i:9000)
             if [ ! -z \"\$PID\" ]; then
               kill -9 \$PID
-            fi &&
+            fi
 
-            # 새 프로세스 실행
-            nohup java -jar target/JobAyong-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+            # 새 프로세스 실행 (local profile)
+            nohup java -jar target/JobAyong-0.0.1-SNAPSHOT.jar --spring.profiles.active=local > app.log 2>&1 &
           "
