@@ -39,6 +39,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/user/signup",
                                 "/api/auth/login",
+                                "/api/auth/find-email",
+                                "/api/auth/request-password-reset",
+                                "/api/auth/verify-reset-token",
+                                "/api/auth/reset-password",
                                 "/api/company/**",
                                 "/api/user/check-email",
                                 "/customInterviewController/**",

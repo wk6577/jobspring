@@ -20,6 +20,9 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration:86400000}") // 24시간 (밀리초)
     private long jwtExpiration;
 
+    @Value("${jwt.reset-expiration:3600000}") // 1시간 (밀리초) - 비밀번호 재설정 토큰용
+    private long resetTokenExpiration;
+
     private SecretKey getSigningKey() {
         // HS512에 적합한 키 생성
         if (jwtSecret.length() < 64) {
@@ -43,12 +46,48 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    /**
+     * 비밀번호 재설정 토큰 생성 (1시간 유효)
+     */
+    public String generateResetToken(String email) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + resetTokenExpiration);
+
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("email", email)
+                .claim("type", "password-reset")
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .compact();
+    }
+
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+
+        return claims.getSubject();
+    }
+
+    /**
+     * 비밀번호 재설정 토큰에서 이메일 추출
+     */
+    public String getEmailFromResetToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        // 토큰 타입 확인
+        String tokenType = claims.get("type", String.class);
+        if (!"password-reset".equals(tokenType)) {
+            throw new JwtException("Invalid token type for password reset");
+        }
 
         return claims.getSubject();
     }
@@ -72,6 +111,31 @@ public class JwtTokenProvider {
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 비밀번호 재설정 토큰 검증
+     */
+    public boolean validateResetToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            // 토큰 타입 확인
+            String tokenType = claims.get("type", String.class);
+            if (!"password-reset".equals(tokenType)) {
+                log.error("Invalid token type for password reset: {}", tokenType);
+                return false;
+            }
+
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.error("Invalid reset JWT token: {}", e.getMessage());
             return false;
         }
     }

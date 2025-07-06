@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final EmailService emailService;
 
     @Transactional
     public void signUp(UserSignUpRequest request) {
@@ -59,6 +61,14 @@ public class UserService {
         user.setRole(UserRole.USER.getValue());
 
         userRepository.save(user);
+        
+        // 환영 이메일 발송 (실패해도 회원가입은 완료)
+        try {
+            emailService.sendWelcomeEmail(request.getEmail(), request.getName());
+        } catch (Exception e) {
+            log.warn("환영 이메일 발송 실패: {}", e.getMessage());
+            // 환영 이메일 실패는 회원가입을 막지 않음
+        }
     }
 
     @Transactional(readOnly = true)
@@ -230,7 +240,7 @@ public class UserService {
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("email", user.getEmail());
             userInfo.put("name", user.getName());
-            userInfo.put("role", user.getUserRole().getValue());
+            userInfo.put("role", user.getUserRole());
             userInfo.put("status", user.getStatus() != null ? user.getStatus() : "ACTIVE");
             userInfo.put("createdAt", user.getCreatedAt());
             userInfo.put("deletedAt", user.getDeletedAt());
@@ -315,10 +325,146 @@ public class UserService {
             String base64Image = Base64.getEncoder().encodeToString(imageData);
             String imageUrl = "data:" + contentType + ";base64," + base64Image;
 
-            return new ProfileImageUploadResponse(originalFilename, null, imageUrl);
+            return new ProfileImageUploadResponse(originalFilename, null, imageUrl, true, "프로필 이미지가 성공적으로 업로드되었습니다.");
 
         } catch (IOException e) {
             throw new RuntimeException("이미지 저장 실패: " + e.getMessage());
         }
+    }
+
+    /**
+     * 이메일 찾기 - 이름, 생년월일, 전화번호로 이메일 조회
+     */
+    @Transactional(readOnly = true)
+    public String findEmailByUserInfo(String name, String birth, String phoneNumber) {
+        // birth 문자열을 LocalDate로 변환
+        LocalDate birthDate;
+        try {
+            birthDate = LocalDate.parse(birth);
+        } catch (Exception e) {
+            throw new RuntimeException("생년월일 형식이 올바르지 않습니다. (예: 2001-01-23)");
+        }
+        
+        User user = userRepository.findByNameAndBirthAndPhoneNumberAndNotDeleted(name, birthDate, phoneNumber)
+                .orElseThrow(() -> new RuntimeException("입력하신 정보와 일치하는 사용자를 찾을 수 없습니다."));
+        
+        String originalEmail = user.getEmail();
+        String maskedEmail = maskEmail(originalEmail);
+        
+        log.info("이메일 찾기 요청 - 이름: {}, 생년월일: {}, 전화번호: {}, 찾은 이메일: {}", 
+                name, birth, phoneNumber, originalEmail);
+        
+        return maskedEmail;
+    }
+
+    /**
+     * 이메일 마스킹 처리
+     * 예: test@example.com -> t***@example.com
+     *     user123@gmail.com -> u******@gmail.com
+     */
+    private String maskEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            return email;
+        }
+        
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 0) {
+            return email; // @가 없거나 첫 번째 문자인 경우 원본 반환
+        }
+        
+        String localPart = email.substring(0, atIndex);
+        String domainPart = email.substring(atIndex);
+        
+        if (localPart.length() <= 1) {
+            return email; // 로컬 파트가 1자 이하인 경우 원본 반환
+        }
+        
+        // 첫 번째 문자는 그대로 두고, 나머지는 *로 마스킹
+        String maskedLocalPart = localPart.charAt(0) + "*".repeat(localPart.length() - 1);
+        
+        return maskedLocalPart + domainPart;
+    }
+
+    /**
+     * 비밀번호 재설정 요청 - 이메일로 재설정 토큰 생성 및 발송
+     */
+    @Transactional
+    public void requestPasswordReset(String email) {
+        User user = userRepository.findByEmailAndNotDeleted(email)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
+        
+        // 비밀번호 재설정 토큰 생성 (JWT 기반, 1시간 유효)
+        String resetToken = jwtTokenProvider.generateResetToken(user.getEmail());
+        
+        // 이메일 발송
+        try {
+            emailService.sendPasswordResetEmail(email, resetToken);
+            log.info("비밀번호 재설정 이메일 발송 완료: {}", email);
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 이메일 발송 실패: {}", e.getMessage());
+            throw new RuntimeException("이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
+    /**
+     * 비밀번호 재설정 토큰 검증
+     */
+    @Transactional(readOnly = true)
+    public boolean verifyResetToken(String token) {
+        try {
+            // JWT 토큰 검증
+            if (jwtTokenProvider.validateResetToken(token)) {
+                String email = jwtTokenProvider.getEmailFromResetToken(token);
+                // 이메일이 존재하는지 확인
+                return userRepository.existsByEmailAndNotDeleted(email);
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("토큰 검증 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 비밀번호 재설정
+     */
+    @Transactional
+    public void resetPassword(String token, String newPassword, String confirmPassword) {
+        // 토큰 검증
+        if (!jwtTokenProvider.validateResetToken(token)) {
+            throw new RuntimeException("만료되었거나 유효하지 않은 토큰입니다.");
+        }
+        
+        // 새 비밀번호와 확인 비밀번호 일치 확인
+        if (!newPassword.equals(confirmPassword)) {
+            throw new RuntimeException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+        }
+        
+        // 새 비밀번호 유효성 검사
+        if (newPassword.length() < 8) {
+            throw new RuntimeException("새 비밀번호는 8자 이상이어야 합니다.");
+        }
+        
+        // 문자와 숫자 포함 여부 확인
+        if (!newPassword.matches(".*[A-Za-z].*")) {
+            throw new RuntimeException("새 비밀번호는 문자를 포함해야 합니다.");
+        }
+        if (!newPassword.matches(".*\\d.*")) {
+            throw new RuntimeException("새 비밀번호는 숫자를 포함해야 합니다.");
+        }
+        
+        // 이메일 추출
+        String email = jwtTokenProvider.getEmailFromResetToken(token);
+        
+        // 사용자 조회
+        User user = userRepository.findByEmailAndNotDeleted(email)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        
+        // 새 비밀번호 암호화 후 저장
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedNewPassword);
+        userRepository.save(user);
+        
+        log.info("비밀번호 재설정 완료: {}", email);
     }
 } 

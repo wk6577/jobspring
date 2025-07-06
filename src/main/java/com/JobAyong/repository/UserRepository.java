@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
@@ -26,4 +27,12 @@ public interface UserRepository extends JpaRepository<User, String> {
     // 탈퇴하지 않은 사용자 존재 여부 확인
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email AND u.deletedAt IS NULL")
     boolean existsByEmailAndNotDeleted(@Param("email") String email);
+    
+    // 이메일 찾기 - 이름, 생년월일, 전화번호로 조회
+    @Query("SELECT u FROM User u WHERE u.name = :name AND u.birth = :birth AND u.phoneNumber = :phoneNumber AND u.deletedAt IS NULL")
+    Optional<User> findByNameAndBirthAndPhoneNumberAndNotDeleted(
+        @Param("name") String name, 
+        @Param("birth") LocalDate birth, 
+        @Param("phoneNumber") String phoneNumber
+    );
 } 

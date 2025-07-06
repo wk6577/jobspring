@@ -11,4 +11,6 @@ public class ProfileImageUploadResponse {
     private String originalFilename;
     private String savedFilename;
     private String imageUrl;
+    private boolean success;
+    private String message;
 }
