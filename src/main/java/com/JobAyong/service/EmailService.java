@@ -68,7 +68,7 @@ public class EmailService {
                 "JobAyong에 가입해주셔서 감사합니다.\n\n" +
                 "JobAyong은 AI 기반 면접 연습과 자기소개서 작성 도움을 제공하는 서비스입니다.\n\n" +
                 "지금 바로 서비스를 이용해보세요!\n" +
-                "http://localhost:3000\n\n" +
+                "https://jobayong.shop\n\n" +
                 "감사합니다.\n" +
                 "JobAyong 팀",
                 userName
