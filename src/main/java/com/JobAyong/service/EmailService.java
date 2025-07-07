@@ -34,7 +34,7 @@ public class EmailService {
                 "안녕하세요, %s입니다.\n\n" +
                 "비밀번호 재설정을 요청하셨습니다.\n\n" +
                 "아래 링크를 클릭하여 비밀번호를 재설정해주세요:\n" +
-                "http://localhost:3000/reset-password?token=%s\n\n" +
+                "https://jobayong.shop/reset-password?token=%s\n\n" +
                 "이 링크는 1시간 후에 만료됩니다.\n\n" +
                 "비밀번호 재설정을 요청하지 않으셨다면 이 이메일을 무시하셔도 됩니다.\n\n" +
                 "감사합니다.\n" +
